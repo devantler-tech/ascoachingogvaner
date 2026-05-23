@@ -12,7 +12,8 @@ function smtpConfigured(): boolean {
 async function send(subject: string, body: string): Promise<void> {
 	const to = env.NOTIFY_EMAIL?.trim();
 	if (!smtpConfigured() || !to) {
-		console.log(`[email] (not sent — SMTP not configured) ${subject}\n${body}`);
+		// Do not log the subject/body — they contain submitter PII.
+		console.log('[email] notification skipped: SMTP not configured');
 		return;
 	}
 

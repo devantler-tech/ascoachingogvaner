@@ -13,8 +13,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ error }, { status: 400 });
 	}
 
-	// Dev / no-DB mode: accept but do not persist.
-	if (env.DEV_SKIP_AUTH === 'true' || !env.DATABASE_URL) {
+	// Dev mode only: accept but do not persist. In any real deployment a
+	// missing DATABASE_URL must fail loudly (below) rather than silently drop.
+	if (env.DEV_SKIP_AUTH === 'true') {
 		return json({ success: true });
 	}
 

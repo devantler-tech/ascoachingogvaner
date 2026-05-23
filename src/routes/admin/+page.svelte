@@ -29,7 +29,7 @@
 				<span class="grid h-9 w-9 place-items-center rounded-full bg-sage-500 text-canvas">
 					<Icon name="leaf" size={18} />
 				</span>
-				<span class="font-serif text-lg">Administration</span>
+				<h1 class="font-serif text-lg">Administration</h1>
 			</div>
 			<div class="flex items-center gap-4">
 				<a href="/" class="text-sm text-muted hover:text-forest-700">Se hjemmeside</a>
@@ -48,7 +48,7 @@
 	<main class="mx-auto max-w-6xl space-y-12 px-5 py-10">
 		<section>
 			<div class="mb-4 flex items-center gap-3">
-				<h1 class="text-2xl">Bookinger</h1>
+				<h2 class="text-2xl">Bookinger</h2>
 				<span class="rounded-full bg-sage-100 px-3 py-0.5 text-sm text-forest-700">
 					{data.bookings.length}
 				</span>
@@ -98,7 +98,7 @@
 
 		<section>
 			<div class="mb-4 flex items-center gap-3">
-				<h1 class="text-2xl">Henvendelser</h1>
+				<h2 class="text-2xl">Henvendelser</h2>
 				<span class="rounded-full bg-sage-100 px-3 py-0.5 text-sm text-forest-700">
 					{data.contacts.length}
 				</span>

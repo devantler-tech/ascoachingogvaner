@@ -10,8 +10,10 @@ const DEV_ADMIN_CODE = 'ascoachingadmin1234';
 export function getAdminCode(): string {
 	const code = env.ADMIN_CODE?.trim();
 	if (code) return code;
-	if (env.NODE_ENV === 'production' && env.DEV_SKIP_AUTH !== 'true') {
-		throw new Error('ADMIN_CODE environment variable is required in production');
+	// The predictable dev fallback is only ever used when auth is explicitly
+	// bypassed; any real environment must provide ADMIN_CODE.
+	if (env.DEV_SKIP_AUTH !== 'true') {
+		throw new Error('ADMIN_CODE environment variable is required');
 	}
 	return DEV_ADMIN_CODE;
 }
