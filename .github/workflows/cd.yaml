@@ -61,10 +61,11 @@ jobs:
         env:
           ACTOR: ${{ github.actor }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF: ${{ github.ref_name }}
         run: |
           flux push artifact \
             "oci://${REGISTRY}/${IMAGE_NAME}/manifests:latest" \
             --path=./deploy \
             --source="$(git config --get remote.origin.url)" \
-            --revision="$(git branch --show-current)/$(git rev-parse HEAD)" \
+            --revision="${REF}/$(git rev-parse HEAD)" \
             --creds "${ACTOR}:${GH_TOKEN}"

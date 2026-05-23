@@ -4,8 +4,8 @@
 	import { createSubmitHandler } from '$lib/submit-helper.js';
 	import Icon from './Icon.svelte';
 
-	const requested = $derived(page.url.searchParams.get('service'));
-	let selected = $derived(
+	const requested = page.url.searchParams.get('service');
+	let selected = $state(
 		requested && bookingOptions.includes(requested) ? requested : bookingOptions[0]
 	);
 

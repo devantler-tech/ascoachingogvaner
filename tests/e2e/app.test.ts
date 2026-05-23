@@ -43,7 +43,12 @@ test('contact form submits successfully', async ({ page }) => {
 
 test('booking form preselects service from query and submits', async ({ page }) => {
 	await page.goto('/book-tid?service=Vanecoaching');
-	await expect(page.getByLabel('Ydelse')).toHaveValue('Vanecoaching');
+	const service = page.getByLabel('Ydelse');
+	await expect(service).toHaveValue('Vanecoaching');
+	// The selection must be user-changeable (regression: it was previously bound
+	// to read-only derived state).
+	await service.selectOption('Stresscoaching');
+	await expect(service).toHaveValue('Stresscoaching');
 	await page.getByLabel('Navn').fill('Test Person');
 	await page.getByLabel('Email').fill('test@example.dk');
 	await page.getByRole('button', { name: /send forespørgsel/i }).click();

@@ -3,6 +3,7 @@ import pg from 'pg';
 import * as schema from './schema.js';
 
 let _db: NodePgDatabase<typeof schema> | undefined;
+let _pool: pg.Pool | undefined;
 
 export function getDb(): NodePgDatabase<typeof schema> {
 	if (!_db) {
@@ -10,12 +11,18 @@ export function getDb(): NodePgDatabase<typeof schema> {
 		if (!connectionString && process.env.DEV_SKIP_AUTH !== 'true') {
 			throw new Error('DATABASE_URL environment variable is required');
 		}
-		const pool = new pg.Pool({
+		_pool = new pg.Pool({
 			...(connectionString ? { connectionString } : {})
 		});
-		_db = drizzle(pool, { schema });
+		_db = drizzle(_pool, { schema });
 	}
 	return _db;
+}
+
+export function getPool(): pg.Pool {
+	getDb();
+	if (!_pool) throw new Error('Database pool is not initialized');
+	return _pool;
 }
 
 // Re-export for convenience — lazy initialized on first access
