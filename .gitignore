@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+.svelte-kit/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+test-results/
+playwright-report/
+.playwright-mcp/

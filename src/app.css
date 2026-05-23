@@ -1,0 +1,47 @@
+@import 'tailwindcss';
+
+@theme {
+	/* Calm, professional wellness palette */
+	--color-canvas: #f7f5f0;
+	--color-surface: #ffffff;
+	--color-sage-50: #eef2ee;
+	--color-sage-100: #d9e2d8;
+	--color-sage-300: #a7bca3;
+	--color-sage-500: #6f8c6a;
+	--color-forest-700: #3f5b46;
+	--color-forest-900: #243528;
+	--color-clay: #c98a6b;
+	--color-gold: #c9a96e;
+	--color-ink: #2b332c;
+	--color-muted: #5e6b60;
+
+	--font-serif: 'Fraunces', Georgia, serif;
+	--font-sans: 'Inter', system-ui, sans-serif;
+
+	--shadow-soft: 0 10px 40px -12px rgba(36, 53, 40, 0.18);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	html {
+		scroll-behavior: smooth;
+	}
+}
+
+body {
+	font-family: var(--font-sans);
+	color: var(--color-ink);
+	background-color: var(--color-canvas);
+	-webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-family: var(--font-serif);
+	font-weight: 400;
+	letter-spacing: -0.01em;
+	color: var(--color-forest-900);
+}

@@ -1,0 +1,19 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: ascoaching-db
+  labels:
+    app.kubernetes.io/name: ascoaching-db
+    app.kubernetes.io/part-of: ascoachingogvaner
+spec:
+  instances: 1
+  storage:
+    size: 1Gi
+  bootstrap:
+    initdb:
+      database: ascoaching
+      owner: ascoaching
+  postgresql:
+    parameters:
+      max_connections: "50"
+      shared_buffers: "64MB"
