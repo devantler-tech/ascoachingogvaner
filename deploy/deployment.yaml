@@ -37,7 +37,7 @@ spec:
       containers:
         - name: ascoachingogvaner
           image: ghcr.io/devantler-tech/ascoachingogvaner:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
               protocol: TCP
