@@ -20,7 +20,7 @@
   "dependencies": {
     "@sveltejs/adapter-node": "^5.0.0",
     "drizzle-orm": "^0.45.2",
-    "nodemailer": "^6.9.16",
+    "nodemailer": "^8.0.7",
     "pg": "^8.16.0"
   },
   "devDependencies": {
@@ -29,7 +29,7 @@
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/vite": "^4.3.0",
     "@types/node": "^25.6.2",
-    "@types/nodemailer": "^6.4.17",
+    "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.15.0",
     "drizzle-kit": "^0.31.0",
     "eslint": "^10.3.0",
