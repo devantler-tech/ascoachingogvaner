@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 env:
   REGISTRY: ghcr.io
@@ -16,8 +15,13 @@ jobs:
   publish-image:
     name: Publish Docker Image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
@@ -43,15 +47,24 @@ jobs:
   push-manifests:
     name: Push K8s Manifests OCI
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
-      - uses: fluxcd/flux2/action@main
+      - uses: fluxcd/flux2/action@1fd61a06264d71cf445ed55c4f14d401d26a1c64 # v2.8.8
 
-      - run: |
+      - name: Push manifests artifact
+        env:
+          ACTOR: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
           flux push artifact \
-            oci://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/manifests:latest \
+            "oci://${REGISTRY}/${IMAGE_NAME}/manifests:latest" \
             --path=./deploy \
             --source="$(git config --get remote.origin.url)" \
             --revision="$(git branch --show-current)/$(git rev-parse HEAD)" \
-            --creds ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}
+            --creds "${ACTOR}:${GH_TOKEN}"
