@@ -22,7 +22,7 @@
 - `src/hooks.server.ts` — request hooks (auth/session).
 - `drizzle/` — generated SQL migrations and metadata; `drizzle.config.ts` at root.
 - `tests/unit/` (Vitest) and `tests/e2e/` (Playwright).
-- `deploy/` — Kustomize manifests for the platform cluster (Deployment, Service, HTTPRoute, CNPG Cluster, SOPS-encrypted secret). Flux decrypts in-cluster.
+- `deploy/` — Kustomize manifests for the platform cluster (Deployment, Service, HTTPRoute, CNPG Cluster, and the admin-code secret backed by OpenBao via External Secrets — Password generator + PushSecret + ExternalSecret).
 - CI/CD: `.github/workflows/` — `ci.yaml` (PR gate), `release.yaml` (semantic-release on `main`), `cd.yaml` (publish OCI artifact on tags).
 
 ## Validation
@@ -38,7 +38,7 @@ npm run test:e2e      # Playwright E2E (set DEV_SKIP_AUTH=true)
 npm run build         # Vite production build
 ```
 
-E2E and DB-free local dev run with `DEV_SKIP_AUTH=true` (no PostgreSQL needed; forms return mock responses, admin shows sample data). With a database, set `DATABASE_URL` then `npm run db:migrate`. Production env vars include `DATABASE_URL`, `ADMIN_CODE`, and optional SMTP/`NOTIFY_EMAIL` settings — never commit secrets or `.env` files; `deploy/*.enc.yaml` are SOPS-encrypted.
+E2E and DB-free local dev run with `DEV_SKIP_AUTH=true` (no PostgreSQL needed; forms return mock responses, admin shows sample data). With a database, set `DATABASE_URL` then `npm run db:migrate`. Production env vars include `DATABASE_URL`, `ADMIN_CODE`, and optional SMTP/`NOTIFY_EMAIL` settings — never commit secrets or `.env` files. `ADMIN_CODE` is sourced from OpenBao via External Secrets (`deploy/admin-code-secret.yaml`), not stored in Git.
 
 ## Maintenance (autonomous AI assistant)
 

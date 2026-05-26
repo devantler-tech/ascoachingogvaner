@@ -57,11 +57,7 @@ spec:
                   name: ascoachingogvaner-admin-code
                   key: ADMIN_CODE
             - name: NOTIFY_EMAIL
-              valueFrom:
-                secretKeyRef:
-                  name: ascoachingogvaner-admin-code
-                  key: NOTIFY_EMAIL
-                  optional: true
+              value: "alettekontakt@gmail.com"
             - name: SMTP_HOST
               valueFrom:
                 secretKeyRef:

@@ -1,5 +1,0 @@
-creation_rules:
-  - path_regex: ^deploy/.+\.enc\.ya?ml$
-    encrypted_regex: ^(data|stringData)$
-    age: |-
-      age1h9hu65zr3ahk4wcv3ftvvgqca0kzdm0jucx609a0s9qs9ax8r4hss0n3n8
