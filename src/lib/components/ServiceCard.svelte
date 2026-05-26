@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Service } from '$lib/content.js';
+	import { site, type Service } from '$lib/content.js';
 	import Icon from './Icon.svelte';
 
 	interface Props {
@@ -43,7 +43,9 @@
 	</div>
 
 	<a
-		href="/book-tid?service={encodeURIComponent(service.title)}"
+		href={site.bookingUrl}
+		target="_blank"
+		rel="noopener noreferrer"
 		class="mt-6 inline-flex items-center gap-2 text-sm font-medium text-forest-700 transition-colors hover:text-forest-900"
 	>
 		Book {service.title.toLowerCase()}

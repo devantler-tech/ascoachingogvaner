@@ -2,83 +2,139 @@
 	import Hero from '$lib/components/Hero.svelte';
 	import Section from '$lib/components/Section.svelte';
 	import Services from '$lib/components/Services.svelte';
+	import ContactForm from '$lib/components/ContactForm.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import { about, focusAreas, freeIntro, pricingNote } from '$lib/content.js';
+	import { about, contact, freeIntro, pricingNote, site } from '$lib/content.js';
+
+	// "Ny" badge marks credentials earned this calendar year; it drops off
+	// automatically once the year rolls over (recomputed on the client).
+	const currentYear = new Date().getFullYear();
 </script>
 
 <Hero />
 
+<!-- Services -->
 <Section
+	id="services"
 	eyebrow="Hvad jeg hjælper med"
-	title="Mere ro, mere overskud, mere dig"
-	intro="Jeg arbejder med stress, angst, vaner og overspisning — altid med udgangspunkt i dig og din hverdag."
-	align="center"
+	title="Coaching der møder dig, hvor du er"
+	intro="Jeg arbejder med stress, angst, vaner og overspisning, altid med udgangspunkt i dig og din hverdag. Vi tilrettelægger forløbet efter dine behov, og alle forløb kan betales i rater."
 >
-	<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-		{#each focusAreas as area (area.title)}
-			<div class="rounded-3xl border border-sage-100 bg-surface p-6 text-center shadow-soft">
-				<span
-					class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-sage-50 text-sage-500"
-				>
-					<Icon name={area.icon} size={26} />
-				</span>
-				<h3 class="mt-4 text-xl">{area.title}</h3>
-				<p class="mt-2 text-sm text-muted">{area.text}</p>
+	<Services detailed />
+	<p class="mt-8 text-sm text-muted">{pricingNote}</p>
+</Section>
+
+<!-- Om mig -->
+<Section id="om-mig" eyebrow="Om mig" title={about.lead}>
+	<div class="grid gap-12 lg:grid-cols-[1.5fr_1fr]">
+		<div class="space-y-5 text-lg text-muted">
+			{#each about.paragraphs as paragraph (paragraph)}
+				<p>{paragraph}</p>
+			{/each}
+		</div>
+
+		<div class="rounded-3xl border border-sage-100 bg-surface p-6 shadow-soft sm:p-7">
+			<h3 class="text-sm font-semibold tracking-[0.18em] text-sage-500 uppercase">
+				Uddannelse & certificeringer
+			</h3>
+			<ul class="mt-5 space-y-3">
+				{#each about.credentials as item (item.title + item.year)}
+					<li
+						class="flex items-baseline justify-between gap-4 border-b border-sage-100 pb-3 last:border-0 last:pb-0"
+					>
+						<span class="text-sm text-ink"
+							>{item.title}{#if Number(item.year) === currentYear}<span
+									class="ml-2 inline-block animate-pulse rounded-full bg-clay px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wider text-canvas"
+									>Ny</span
+								>{/if}</span
+						>
+						<span class="shrink-0 text-sm font-medium text-sage-500">{item.year}</span>
+					</li>
+				{/each}
+			</ul>
+		</div>
+	</div>
+
+	<div class="mt-10 grid gap-4 sm:grid-cols-3">
+		{#each about.values as value (value.title)}
+			<div class="flex items-start gap-3 rounded-2xl border border-sage-100 bg-surface p-5">
+				<span class="mt-0.5 text-sage-500"><Icon name="check" size={20} /></span>
+				<div>
+					<h3 class="text-base">{value.title}</h3>
+					<p class="mt-0.5 text-sm text-muted">{value.text}</p>
+				</div>
 			</div>
 		{/each}
 	</div>
 </Section>
 
-<!-- Free intro band -->
-<section class="bg-forest-700">
-	<div
-		class="mx-auto flex max-w-6xl flex-col items-start gap-6 px-5 py-14 sm:flex-row sm:items-center sm:justify-between"
-	>
-		<div class="max-w-2xl">
-			<h2 class="text-2xl text-canvas sm:text-3xl">{freeIntro.title}</h2>
-			<p class="mt-3 text-sage-100">{freeIntro.text}</p>
-		</div>
-		<a
-			href="/book-tid"
-			class="inline-flex shrink-0 items-center gap-2 rounded-full bg-canvas px-7 py-3.5 font-medium text-forest-900 transition-colors hover:bg-sage-50"
-		>
-			Book gratis startsamtale
-			<Icon name="arrow" size={18} />
-		</a>
-	</div>
-</section>
-
+<!-- Kontakt & booking -->
 <Section
-	eyebrow="Services"
-	title="Forløb der passer til dig"
-	intro="Vælg et enkelt møde eller et forløb. Alle forløb kan betales i rater."
+	id="kontakt"
+	eyebrow="Kontakt & booking"
+	title={contact.lead}
+	intro="Book en tid direkte i kalenderen, eller skriv en besked her med dine spørgsmål, så vender jeg tilbage hurtigst muligt."
 >
-	<Services />
-	<p class="mt-8 text-sm text-muted">{pricingNote}</p>
-</Section>
-
-<!-- About teaser -->
-<Section>
-	<div class="grid items-center gap-10 rounded-[2.5rem] bg-sage-50 p-8 sm:p-12 lg:grid-cols-2">
-		<div>
-			<p class="mb-3 text-sm font-semibold tracking-[0.18em] text-sage-500 uppercase">Om mig</p>
-			<h2 class="text-3xl">{about.lead}</h2>
-			<p class="mt-4 text-muted">{about.paragraphs[0]}</p>
-			<a
-				href="/om-mig"
-				class="mt-6 inline-flex items-center gap-2 font-medium text-forest-700 hover:text-forest-900"
-			>
-				Læs mere om mig
-				<Icon name="arrow" size={18} />
-			</a>
+	<div class="grid gap-12 lg:grid-cols-[1.3fr_1fr]">
+		<div class="rounded-3xl border border-sage-100 bg-surface p-7 shadow-soft sm:p-9">
+			<h3 class="text-xl">Skriv en besked</h3>
+			<p class="mt-1 mb-6 text-sm text-muted">{contact.text}</p>
+			<ContactForm />
 		</div>
-		<div class="grid gap-4 sm:grid-cols-3">
-			{#each about.values as value (value.title)}
-				<div class="rounded-2xl bg-surface p-5 text-center shadow-soft">
-					<h3 class="text-lg">{value.title}</h3>
-					<p class="mt-1 text-xs text-muted">{value.text}</p>
-				</div>
-			{/each}
+
+		<div class="space-y-4">
+			<div class="rounded-3xl bg-forest-700 p-6 text-canvas">
+				<h3 class="text-xl text-canvas">{freeIntro.title}</h3>
+				<p class="mt-2 text-sm text-sage-100">{freeIntro.text}</p>
+				<a
+					href={site.bookingUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="mt-5 inline-flex items-center gap-2 rounded-full bg-canvas px-6 py-3 text-sm font-medium text-forest-900 transition-colors hover:bg-sage-50"
+				>
+					Book tid online
+					<Icon name="arrow" size={18} />
+				</a>
+			</div>
+
+			<a
+				href="mailto:{site.email}"
+				class="flex items-center gap-4 rounded-2xl border border-sage-100 bg-surface p-5 transition-colors hover:border-sage-300"
+			>
+				<span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sage-50 text-sage-500">
+					<Icon name="mail" size={20} />
+				</span>
+				<span>
+					<span class="block text-sm text-muted">Email</span>
+					<span class="font-medium text-forest-900">{site.email}</span>
+				</span>
+			</a>
+			<a
+				href="tel:{site.phone.replace(/\s/g, '')}"
+				class="flex items-center gap-4 rounded-2xl border border-sage-100 bg-surface p-5 transition-colors hover:border-sage-300"
+			>
+				<span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sage-50 text-sage-500">
+					<Icon name="phone" size={20} />
+				</span>
+				<span>
+					<span class="block text-sm text-muted">Telefon</span>
+					<span class="font-medium text-forest-900">{site.phone}</span>
+				</span>
+			</a>
+			<a
+				href={site.mapsUrl}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="flex items-center gap-4 rounded-2xl border border-sage-100 bg-surface p-5 transition-colors hover:border-sage-300"
+			>
+				<span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sage-50 text-sage-500">
+					<Icon name="pin" size={20} />
+				</span>
+				<span>
+					<span class="block text-sm text-muted">Adresse</span>
+					<span class="font-medium whitespace-pre-line text-forest-900">{site.address}</span>
+				</span>
+			</a>
 		</div>
 	</div>
 </Section>

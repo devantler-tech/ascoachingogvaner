@@ -1,29 +1,30 @@
-# AS Coaching og Vaner
+# AS - Coaching, vaner og ro
 
-Marketing- og bookingside for **AS Coaching og Vaner** — personlig coaching i stress, angst,
-vaner og overspisning. Besøgende kan læse om ydelserne, sende en kontaktbesked og bestille tid
-(inkl. en gratis startsamtale). Indkomne bookinger og henvendelser ses i et adminoverblik.
+Marketingside for **AS - Coaching, vaner og ro**: personlig coaching i stress, angst,
+vaner og overspisning. Besøgende kan læse om ydelserne, sende en besked og booke tid.
+
+Siden er fuldt statisk (ingen database eller backend). Booking foregår i et eksternt
+bookingsystem, og kontaktformularen åbner den besøgendes egen mailapp med en udfyldt besked.
 
 Deployes som tenant på [devantler-tech/platform](https://github.com/devantler-tech/platform)
 via en OCI-pakket Kustomize-konfiguration (`deploy/`).
 
 ## Features
 
-- **Forside** — hero, fokusområder, services-overblik og gratis startsamtale
-- **Services** — fire forløb (stress, angst, vaner, overspisning) med priser og rater
-- **Om mig** — præsentation af coachen (pladsholdertekst indtil endeligt indhold)
-- **Kontakt** — kontaktformular der sender en e-mailnotifikation
-- **Book tid** — booking-forespørgsel der gemmes og sender en e-mailnotifikation
-- **Admin** — adgangskodebeskyttet overblik over bookinger og henvendelser
+Hele siden er én sammenhængende side; navigationen scroller til det relevante afsnit:
+
+- **Forside**: hero med de primære call-to-actions
+- **Services**: fire forløb (stress, angst, vaner, overspisning) med priser og rater
+- **Om mig**: coachens baggrund, personlige historie og uddannelse/certificeringer
+- **Kontakt & booking**: kontaktformular (åbner mailapp via `mailto`) plus "Book tid"-knapper, der linker til det eksterne bookingsystem
 
 ## Tech stack
 
-- [SvelteKit](https://kit.svelte.dev) + TypeScript
+- [SvelteKit](https://kit.svelte.dev) (Svelte 5) + TypeScript
+- [`@sveltejs/adapter-static`](https://svelte.dev/docs/kit/adapter-static): hele siden prerenderes til statisk HTML
 - [TailwindCSS v4](https://tailwindcss.com)
-- [Drizzle ORM](https://orm.drizzle.team) + PostgreSQL
-- [Nodemailer](https://nodemailer.com) til e-mailnotifikationer (best-effort)
-- [Playwright](https://playwright.dev) til E2E-tests
-- Deployes til Kubernetes via [CloudNativePG](https://cloudnative-pg.io) + [Longhorn](https://longhorn.io)
+- [Vitest](https://vitest.dev) (unit) + [Playwright](https://playwright.dev) (E2E)
+- Serveres i produktion af nginx (se `Dockerfile` og `docker/nginx.conf`)
 
 ## Kør lokalt
 
@@ -32,48 +33,28 @@ via en OCI-pakket Kustomize-konfiguration (`deploy/`).
 - Node.js ≥ 22
 - npm
 
-### Udvikling (uden database)
-
-Sæt `DEV_SKIP_AUTH=true` for at køre uden PostgreSQL. Booking- og kontaktformularer returnerer
-mock-svar og gemmer ikke data, og admin-overblikket viser eksempeldata.
+### Udvikling
 
 ```bash
 npm install
-DEV_SKIP_AUTH=true npm run dev
-```
-
-Åbn [http://localhost:5173](http://localhost:5173). Admin findes på `/admin` (login `/login`,
-brug koden `ADMIN` i dev-mode).
-
-### Udvikling (med database)
-
-```bash
-export DATABASE_URL="postgresql://user:password@localhost:5432/ascoaching"
-npm run db:migrate
 npm run dev
 ```
+
+Åbn [http://localhost:5173](http://localhost:5173). Ingen database eller miljøvariabler er nødvendige.
 
 ## Scripts
 
 | Script | Beskrivelse |
 |--------|-------------|
 | `npm run dev` | Udviklingsserver |
-| `npm run build` | Produktionsbuild (adapter-node) |
+| `npm run build` | Statisk produktionsbuild (prerender til `build/`) |
+| `npm run preview` | Forhåndsvis det byggede statiske site |
 | `npm run check` | Svelte/TypeScript-typecheck |
 | `npm run lint` | ESLint |
 | `npm test` | Unit-tests (Vitest) |
 | `npm run test:e2e` | E2E-tests (Playwright) |
-| `npm run db:generate` | Generér Drizzle-migration ud fra schema |
-| `npm run db:migrate` | Kør migrationer |
 
 ## Miljøvariabler
 
-| Variabel | Krævet | Beskrivelse |
-|----------|--------|-------------|
-| `DATABASE_URL` | prod | PostgreSQL-forbindelse (leveres af CNPG) |
-| `ADMIN_CODE` | prod | Adgangskode til admin-overblikket |
-| `NOTIFY_EMAIL` | nej | Modtager af booking-/kontaktnotifikationer |
-| `SMTP_HOST` / `SMTP_PORT` | nej | SMTP-server til notifikationer |
-| `SMTP_USER` / `SMTP_PASS` | nej | SMTP-login |
-| `SMTP_FROM` | nej | Afsenderadresse |
-| `DEV_SKIP_AUTH` | nej | Sæt `true` for at køre uden DB/auth (kun udvikling/test) |
+Ingen. Siden er statisk, og alt indhold (inkl. kontaktoplysninger og bookinglink) ligger i
+`src/lib/content.ts`.

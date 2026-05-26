@@ -1,25 +1,39 @@
 <script lang="ts">
-	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import { nav, site } from '$lib/content.js';
 	import Icon from './Icon.svelte';
 
 	let open = $state(false);
+	let activeId = $state('top');
 
-	function isActive(href: string): boolean {
-		if (href === '/') return page.url.pathname === '/';
-		return page.url.pathname.startsWith(href);
-	}
+	// Scroll-spy: highlight the nav link for whichever section is currently in view.
+	onMount(() => {
+		const targets = nav
+			.map((link) => document.getElementById(link.href.replace(/^#/, '')))
+			.filter((el): el is HTMLElement => el !== null);
+		if (targets.length === 0) return;
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) activeId = entry.target.id;
+				}
+			},
+			// A thin band across the viewport middle — the section crossing it is "current".
+			{ rootMargin: '-45% 0px -50% 0px' }
+		);
+		for (const target of targets) observer.observe(target);
+		return () => observer.disconnect();
+	});
+
+	const isActive = (href: string): boolean => href === `#${activeId}`;
+	const isExternal = (href: string): boolean => /^https?:\/\//.test(href);
 </script>
 
 <header class="sticky top-0 z-40 border-b border-sage-100 bg-canvas/85 backdrop-blur">
 	<nav class="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-		<a href="/" class="flex items-center gap-2 text-forest-900" onclick={() => (open = false)}>
-			<span
-				class="grid h-9 w-9 place-items-center rounded-full bg-sage-500 text-canvas"
-				aria-hidden="true"
-			>
-				<Icon name="leaf" size={18} />
-			</span>
+		<a href="#top" class="flex items-center gap-2 text-forest-900" onclick={() => (open = false)}>
+			<img src="/logo.png" alt="" class="h-10 w-10 rounded-full object-cover" />
 			<span class="font-serif text-lg leading-tight">{site.short}</span>
 		</a>
 
@@ -29,6 +43,8 @@
 					{#if link.cta}
 						<a
 							href={link.href}
+							target={isExternal(link.href) ? '_blank' : undefined}
+							rel={isExternal(link.href) ? 'noopener noreferrer' : undefined}
 							class="ml-2 inline-flex items-center gap-2 rounded-full bg-forest-700 px-5 py-2 text-sm font-medium text-canvas transition-colors hover:bg-forest-900"
 						>
 							{link.label}
@@ -68,6 +84,8 @@
 					<li>
 						<a
 							href={link.href}
+							target={isExternal(link.href) ? '_blank' : undefined}
+							rel={isExternal(link.href) ? 'noopener noreferrer' : undefined}
 							onclick={() => (open = false)}
 							class="block rounded-lg px-4 py-3 text-base font-medium {link.cta
 								? 'bg-forest-700 text-center text-canvas'

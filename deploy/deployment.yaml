@@ -39,66 +39,16 @@ spec:
           image: ghcr.io/devantler-tech/ascoachingogvaner:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 3000
+            # Static site served by unprivileged nginx (listens on 8080).
+            - containerPort: 8080
               protocol: TCP
-          env:
-            - name: PORT
-              value: "3000"
-            - name: NODE_ENV
-              value: "production"
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: ascoaching-db-app
-                  key: uri
-            - name: ADMIN_CODE
-              valueFrom:
-                secretKeyRef:
-                  name: ascoachingogvaner-admin-code
-                  key: ADMIN_CODE
-            - name: NOTIFY_EMAIL
-              valueFrom:
-                secretKeyRef:
-                  name: ascoachingogvaner-admin-code
-                  key: NOTIFY_EMAIL
-                  optional: true
-            - name: SMTP_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: ascoachingogvaner-admin-code
-                  key: SMTP_HOST
-                  optional: true
-            - name: SMTP_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: ascoachingogvaner-admin-code
-                  key: SMTP_PORT
-                  optional: true
-            - name: SMTP_USER
-              valueFrom:
-                secretKeyRef:
-                  name: ascoachingogvaner-admin-code
-                  key: SMTP_USER
-                  optional: true
-            - name: SMTP_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: ascoachingogvaner-admin-code
-                  key: SMTP_PASS
-                  optional: true
-            - name: SMTP_FROM
-              valueFrom:
-                secretKeyRef:
-                  name: ascoachingogvaner-admin-code
-                  key: SMTP_FROM
-                  optional: true
           resources:
             requests:
-              cpu: 50m
-              memory: 64Mi
+              cpu: 10m
+              memory: 16Mi
             limits:
-              cpu: 200m
-              memory: 128Mi
+              cpu: 100m
+              memory: 64Mi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -106,13 +56,13 @@ spec:
               drop: [ALL]
           livenessProbe:
             httpGet:
-              path: /health
-              port: 3000
+              path: /
+              port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /health
-              port: 3000
+              path: /
+              port: 8080
             initialDelaySeconds: 3
             periodSeconds: 5
