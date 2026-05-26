@@ -15,7 +15,7 @@
 	--color-ink: #2b332c;
 	--color-muted: #5e6b60;
 
-	--font-serif: 'Fraunces', Georgia, serif;
+	--font-serif: 'Lora', Georgia, serif;
 	--font-sans: 'Inter', system-ui, sans-serif;
 
 	--shadow-soft: 0 10px 40px -12px rgba(36, 53, 40, 0.18);
@@ -27,21 +27,30 @@
 	}
 }
 
-body {
-	font-family: var(--font-sans);
-	color: var(--color-ink);
-	background-color: var(--color-canvas);
-	-webkit-font-smoothing: antialiased;
+/* Keep anchored sections clear of the sticky header when scrolled to. */
+section[id] {
+	scroll-margin-top: 5rem;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-	font-family: var(--font-serif);
-	font-weight: 400;
-	letter-spacing: -0.01em;
-	color: var(--color-forest-900);
+/* Base element styles live in @layer base so Tailwind utilities (e.g. a
+   text-canvas heading on a dark card) can override them. */
+@layer base {
+	body {
+		font-family: var(--font-sans);
+		color: var(--color-ink);
+		background-color: var(--color-canvas);
+		-webkit-font-smoothing: antialiased;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-family: var(--font-serif);
+		font-weight: 400;
+		letter-spacing: -0.01em;
+		color: var(--color-forest-900);
+	}
 }

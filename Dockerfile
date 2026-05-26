@@ -4,18 +4,11 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 COPY . .
 RUN npm run build
-RUN npm prune --production
 
-FROM node:26-alpine
-WORKDIR /app
-COPY --from=build /app/build ./build
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./
-COPY --from=build /app/drizzle ./drizzle
-ENV NODE_ENV=production
-ENV PORT=3000
-EXPOSE 3000
+# Static site: serve the prerendered output with an unprivileged nginx.
+FROM nginxinc/nginx-unprivileged:1-alpine
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/build /usr/share/nginx/html
+EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -q -t 1 --spider http://localhost:3000/health || exit 1
-USER node
-CMD ["node", "build/index.js"]
+  CMD wget -q -t 1 --spider http://localhost:8080/ || exit 1

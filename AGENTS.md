@@ -2,27 +2,24 @@
 
 ## Project overview
 
-`ascoachingogvaner` is a private SvelteKit + TypeScript web application — a marketing and booking site for a personal coaching practice (Danish-language content). Visitors read about the services, send a contact message, and request a booking (including a free intro session); incoming bookings and enquiries are visible in a password-protected admin view. It is deployed as a tenant on the devantler-tech platform Kubernetes cluster (CloudNativePG-backed PostgreSQL, Longhorn storage) via an OCI-packaged Kustomize config.
+`ascoachingogvaner` is a private, fully static SvelteKit + TypeScript marketing site for a personal coaching practice (Danish-language content). Visitors read about the services, send a message (which opens their own mail app via a `mailto:` link), and book sessions through an external booking system. There is no database, admin area or server-side code: the whole site is prerendered to static HTML (`@sveltejs/adapter-static`) and served by nginx. It is deployed as a tenant on the devantler-tech platform Kubernetes cluster via an OCI-packaged Kustomize config.
 
 ## Stack
 
-- SvelteKit (Svelte 5) + TypeScript, `@sveltejs/adapter-node`
+- SvelteKit (Svelte 5) + TypeScript, `@sveltejs/adapter-static` (fully prerendered, no server runtime)
 - TailwindCSS v4
-- Drizzle ORM + PostgreSQL (`pg`)
-- Nodemailer for best-effort email notifications
 - Vitest (unit) + Playwright (E2E)
-- Node.js >= 22, npm
+- Served in production by nginx (see `Dockerfile` and `docker/nginx.conf`)
+- Node.js >= 22, npm (build-time only)
 
 ## Structure
 
-- `src/routes/` — SvelteKit routes: `(site)` public pages (`services`, `om-mig`, `kontakt`, `book-tid`), `admin/`, `login/`, `logout/`, `health/`, and `api/` endpoints (`booking`, `contact`).
-- `src/lib/components/` — Svelte UI components (Hero, Nav, Services, ServiceCard, BookingForm, ContactForm, etc.).
-- `src/lib/server/` — server-only modules: `auth`, `cookies`, `db`, `schema`, `migrate`, `email`.
-- `src/lib/` — shared modules (`content`, `validation`, `submit-helper`).
-- `src/hooks.server.ts` — request hooks (auth/session).
-- `drizzle/` — generated SQL migrations and metadata; `drizzle.config.ts` at root.
+- `src/routes/` — `(site)` is a single prerendered public page (hero plus `services`, `om-mig`, and a combined `kontakt` contact/booking section reached via in-page anchor links). `+layout.ts` sets `prerender = true` for the whole site; `+error.svelte` is the fallback page.
+- `src/lib/components/` — Svelte UI components (Hero, Nav, Services, ServiceCard, ContactForm, etc.).
+- `src/lib/` — shared modules: `content` (all copy, contact details and the booking URL) and `mailto` (builds the contact `mailto:` link).
+- `static/` — static assets (logo/favicon `logo.png`, hero image).
 - `tests/unit/` (Vitest) and `tests/e2e/` (Playwright).
-- `deploy/` — Kustomize manifests for the platform cluster (Deployment, Service, HTTPRoute, CNPG Cluster, SOPS-encrypted secret). Flux decrypts in-cluster.
+- `deploy/` — Kustomize manifests for the platform cluster (Deployment, Service, HTTPRoute). `Dockerfile` and `docker/nginx.conf` build and serve the static output.
 - CI/CD: `.github/workflows/` — `ci.yaml` (PR gate), `release.yaml` (semantic-release on `main`), `cd.yaml` (publish OCI artifact on tags).
 
 ## Validation
@@ -34,11 +31,11 @@ npm ci
 npm run lint          # ESLint
 npm run check         # svelte-kit sync && svelte-check (type check)
 npm test              # Vitest unit tests
-npm run test:e2e      # Playwright E2E (set DEV_SKIP_AUTH=true)
-npm run build         # Vite production build
+npm run test:e2e      # Playwright E2E (builds + previews the static site)
+npm run build         # Static prerender build (adapter-static -> build/)
 ```
 
-E2E and DB-free local dev run with `DEV_SKIP_AUTH=true` (no PostgreSQL needed; forms return mock responses, admin shows sample data). With a database, set `DATABASE_URL` then `npm run db:migrate`. Production env vars include `DATABASE_URL`, `ADMIN_CODE`, and optional SMTP/`NOTIFY_EMAIL` settings — never commit secrets or `.env` files; `deploy/*.enc.yaml` are SOPS-encrypted.
+No database, secrets or environment variables are required: the site is fully static and all content (including public contact details and the external booking URL) lives in `src/lib/content.ts`. Never commit `.env` files.
 
 ## Maintenance (autonomous AI assistant)
 
