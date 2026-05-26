@@ -49,6 +49,7 @@
 				name="name"
 				type="text"
 				required
+				maxlength="100"
 				autocomplete="name"
 				placeholder="Fx Anna Jensen"
 				oninvalid={setDanishValidity}
@@ -63,6 +64,7 @@
 				name="phone"
 				type="tel"
 				required
+				maxlength="40"
 				autocomplete="tel"
 				placeholder="Fx 12 34 56 78"
 				oninvalid={setDanishValidity}
@@ -78,6 +80,7 @@
 			name="email"
 			type="email"
 			required
+			maxlength="254"
 			autocomplete="email"
 			placeholder="Fx anna@eksempel.dk"
 			oninvalid={setDanishValidity}
@@ -92,6 +95,7 @@
 			name="message"
 			rows="5"
 			required
+			maxlength="1500"
 			placeholder="Fortæl gerne lidt om, hvad du gerne vil arbejde med, hvad der fylder hos dig lige nu, og hvornår det passer dig at tale sammen."
 			oninvalid={setDanishValidity}
 			oninput={clearValidity}

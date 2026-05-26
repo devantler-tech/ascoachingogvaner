@@ -8,21 +8,28 @@
 
 	// Scroll-spy: highlight the nav link for whichever section is currently in view.
 	onMount(() => {
-		const targets = nav
+		const sections = nav
 			.map((link) => document.getElementById(link.href.replace(/^#/, '')))
 			.filter((el): el is HTMLElement => el !== null);
-		if (targets.length === 0) return;
+		if (sections.length === 0) return;
 
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) activeId = entry.target.id;
-				}
-			},
-			// A thin band across the viewport middle — the section crossing it is "current".
-			{ rootMargin: '-45% 0px -50% 0px' }
-		);
-		for (const target of targets) observer.observe(target);
+		// Deterministically pick the last section whose top has scrolled past a
+		// reference line, recomputed from layout on every crossing. This avoids
+		// relying on the unspecified ordering of the observer's entries array (and
+		// the "last intersecting wins" race when several sections overlap).
+		const update = () => {
+			const line = window.innerHeight * 0.45;
+			let current = sections[0].id;
+			for (const el of sections) {
+				if (el.getBoundingClientRect().top <= line) current = el.id;
+			}
+			activeId = current;
+		};
+
+		// The thin band only serves to wake the observer near each section boundary.
+		const observer = new IntersectionObserver(update, { rootMargin: '-45% 0px -50% 0px' });
+		for (const el of sections) observer.observe(el);
+		update();
 		return () => observer.disconnect();
 	});
 
