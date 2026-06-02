@@ -15,8 +15,10 @@
 			href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@300;400;500;600;700&display=swap"
 			rel="stylesheet"
 		/>
-		<!-- Umami privacy-first web analytics (self-hosted on the platform) -->
-		<script defer src="https://analytics.platform.devantler.tech/script.js" data-website-id="5e76b00b-67e5-4aef-b4df-17fca43e9a33"></script>
+		<!-- Umami privacy-first web analytics (self-hosted on the platform).
+		     data-domains restricts the tracker to the trusted host so the public
+		     website-id can't be used to send events from a spoofed site. -->
+		<script defer src="https://analytics.platform.devantler.tech/script.js" data-website-id="5e76b00b-67e5-4aef-b4df-17fca43e9a33" data-domains="ascoachingogvaner.platform.devantler.tech"></script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
