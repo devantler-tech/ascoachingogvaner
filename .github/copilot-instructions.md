@@ -23,9 +23,9 @@ concise review checklist — flag violations of the rules below.
 
 - Svelte 5 **runes** (`$state`/`$derived`/`$props`); flag legacy `export let` / reactive `$:` in new code.
   Keep TypeScript strict — no new `any`, no `// @ts-ignore` to dodge a real type error.
-- The site is **fully prerendered**: `(site)/+layout.ts` sets `prerender = true`. Flag anything that breaks
-  static output — server-only code (`+page.server.ts` with runtime logic), `load` that needs a request, or
-  a non-static adapter. There is no server at runtime.
+- The site is **fully prerendered**: `src/routes/+layout.ts` sets `prerender = true` for the whole site.
+  Flag anything that breaks static output — server-only code (`+page.server.ts` with runtime logic), `load`
+  that needs a request, or a non-static adapter. There is no server at runtime.
 - `npm run check` (svelte-kit sync && svelte-check) and `npm run lint` (ESLint flat config,
   `eslint-plugin-svelte` + `typescript-eslint`) must pass — they are required CI checks.
 - TailwindCSS v4 (`@tailwindcss/vite`); prefer utility classes over ad-hoc `<style>`.
@@ -41,7 +41,8 @@ concise review checklist — flag violations of the rules below.
 
 ## Validation & CI
 
-- Mirror `ci.yaml`: `npm ci && npm run lint && npm run check && npm test && npm run test:e2e && npm run build`
+- Run the same checks CI runs (the workflow splits them into separate jobs, each doing `npm ci` + one step):
+  `npm ci && npm run lint && npm run check && npm test && npm run test:e2e && npm run build`
   (`build` prerenders to `build/` via adapter-static; the Docker image serves it with nginx).
 - Private platform-tenant app — be conservative; never expose its contents publicly.
 
