@@ -23,7 +23,7 @@
     "@types/node": "^25.6.2",
     "eslint": "^10.3.0",
     "eslint-plugin-svelte": "^3.18.0",
-    "svelte": "^5.55.7",
+    "svelte": "^5.55.10",
     "svelte-check": "^4.4.8",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
