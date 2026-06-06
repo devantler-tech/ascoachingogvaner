@@ -13,6 +13,6 @@ jobs:
       contents: read # checkout
       packages: write # push image + manifests OCI artifact
       id-token: write # keyless cosign signing
-    uses: devantler-tech/reusable-workflows/.github/workflows/publish-app.yaml@59c9a1792fbef2d5849127a1c892ed39990645d9 # v5.5.5
+    uses: devantler-tech/reusable-workflows/.github/workflows/publish-app.yaml@e67eb6e14b733748c43a4e0df1c572fdd0ae3773 # v5.5.6
     with:
       app-name: ascoachingogvaner
