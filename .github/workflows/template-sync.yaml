@@ -12,7 +12,7 @@ jobs:
     # Skipped in the template repo itself (it is the sync source); runs in every
     # tenant created from this template, where it opens a PR with template changes.
     if: github.repository != 'devantler-tech/gitops-tenant-template'
-    uses: devantler-tech/reusable-workflows/.github/workflows/template-sync.yaml@59c9a1792fbef2d5849127a1c892ed39990645d9 # v5.5.5
+    uses: devantler-tech/reusable-workflows/.github/workflows/template-sync.yaml@e67eb6e14b733748c43a4e0df1c572fdd0ae3773 # v5.5.6
     with:
       source-repo-path: devantler-tech/gitops-tenant-template
     secrets:
