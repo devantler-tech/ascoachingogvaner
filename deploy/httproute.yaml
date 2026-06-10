@@ -5,10 +5,27 @@ metadata:
   namespace: ascoachingogvaner
 spec:
   parentRefs:
+    # The shared hostname-less HTTPS listener — serves the platform.devantler.tech
+    # and platform.lan hostnames under the platform wildcard certificate.
     - name: platform
       namespace: kube-system
       sectionName: https
+    # The SNI listener dedicated to the tenant-owned domain (added by the
+    # platform's hetzner overlay, with the domain's own certificate). On
+    # clusters without that listener this parentRef simply reports unattached
+    # while the one above keeps working.
+    - name: platform
+      namespace: kube-system
+      sectionName: https-ascoachingogvaner-dk
   hostnames:
+    # The tenant owns its public hostnames (the platform no longer patches
+    # them in): the customer domain, DNS-managed at simply.com by the
+    # platform's external-dns-simply instance...
+    - ascoachingogvaner.dk
+    # ...the platform subdomain, DNS-managed at Cloudflare by the platform's
+    # external-dns instance...
+    - ascoachingogvaner.platform.devantler.tech
+    # ...and the host-file hostname used on local/dev clusters.
     - ascoachingogvaner.platform.lan
   rules:
     - backendRefs:

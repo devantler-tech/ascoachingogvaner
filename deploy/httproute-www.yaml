@@ -1,0 +1,22 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: ascoachingogvaner-www-redirect
+  namespace: ascoachingogvaner
+spec:
+  parentRefs:
+    # The www SNI listener on the shared platform Gateway (prod only — see
+    # httproute.yaml). Its hostname below also makes external-dns create the
+    # www DNS record at simply.com.
+    - name: platform
+      namespace: kube-system
+      sectionName: https-www-ascoachingogvaner-dk
+  hostnames:
+    - www.ascoachingogvaner.dk
+  rules:
+    # Canonicalise on the apex: permanent redirect, preserving path/query.
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            hostname: ascoachingogvaner.dk
+            statusCode: 301
