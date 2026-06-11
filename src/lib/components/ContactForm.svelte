@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { trackEvent } from '$lib/analytics.js';
 	import { site } from '$lib/content.js';
 	import { buildContactMailto } from '$lib/mailto.js';
 	import Icon from './Icon.svelte';
@@ -17,6 +18,9 @@
 			message: String(data.get('message') ?? '')
 		});
 		opened = true;
+		// The browser only fires onsubmit once native validation passes, so this
+		// records a genuine, completed lead — no PII, just the coarse event name.
+		trackEvent('contact-submit');
 		window.location.href = url;
 	}
 
