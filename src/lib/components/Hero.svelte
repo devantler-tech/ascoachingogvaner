@@ -46,11 +46,14 @@
 
 		<div class="relative">
 			<div class="aspect-[4/5] overflow-hidden rounded-[2rem] bg-sage-100 shadow-soft">
-				<img
-					src="/alette-hero.jpg"
+				<!-- Above-the-fold hero: enhancedImages() emits AVIF/WebP + responsive widths
+				     with a JPEG fallback at build time (see vite.config). fetchpriority high,
+				     never lazy-loaded; the 4/5 container fixes the box so there is no CLS. -->
+				<enhanced:img
+					src="$lib/assets/alette-hero.jpg?w=640;960;1440"
+					sizes="(min-width: 1024px) 576px, 100vw"
 					alt="Alette, coach hos {site.name}"
-					width="1440"
-					height="1440"
+					fetchpriority="high"
 					class="h-full w-full object-cover object-top"
 				/>
 			</div>

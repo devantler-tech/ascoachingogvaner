@@ -4,6 +4,8 @@ test('homepage shows hero and primary CTA', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('overskud');
 	await expect(page.getByRole('link', { name: /gratis startsamtale/i }).first()).toBeVisible();
+	// The responsive hero image (enhanced:img <picture>) renders with its alt text.
+	await expect(page.getByRole('img', { name: /Alette, coach/i })).toBeVisible();
 });
 
 test('nav links scroll to the matching sections on one page', async ({ page }) => {
