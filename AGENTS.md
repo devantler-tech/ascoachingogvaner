@@ -8,7 +8,7 @@
 
 - SvelteKit (Svelte 5) + TypeScript, `@sveltejs/adapter-static` (fully prerendered, no server runtime)
 - TailwindCSS v4
-- Vitest (unit) + Playwright (E2E)
+- Vitest (unit) + Playwright (E2E, incl. `@axe-core/playwright` accessibility checks)
 - Served in production by nginx (see `Dockerfile` and `docker/nginx.conf`)
 - Node.js >= 22, npm (build-time only)
 
@@ -18,7 +18,7 @@
 - `src/lib/components/` — Svelte UI components (Hero, Nav, Services, ServiceCard, ContactForm, etc.).
 - `src/lib/` — shared modules: `content` (all copy, contact details and the booking URL) and `mailto` (builds the contact `mailto:` link).
 - `static/` — static assets (logo/favicon `logo.png`, hero image).
-- `tests/unit/` (Vitest) and `tests/e2e/` (Playwright).
+- `tests/unit/` (Vitest) and `tests/e2e/` (Playwright). **Accessibility is a tested invariant:** `tests/e2e/a11y.test.ts` runs axe-core (WCAG 2.1 A/AA) against the built site and fails the E2E gate on any critical/serious violation, so a future contrast/focus/landmark regression cannot ship silently. Keep it green — fix the markup at the root rather than relaxing the check; only allow-list a finding that is a deliberate, documented design choice.
 - `deploy/` — Kustomize manifests for the platform cluster (Deployment, Service, HTTPRoute). `Dockerfile` and `docker/nginx.conf` build and serve the static output.
 - CI/CD: `.github/workflows/` — `ci.yaml` (PR gate), `release.yaml` (semantic-release on `main`), `cd.yaml` (publish OCI artifact on tags).
 

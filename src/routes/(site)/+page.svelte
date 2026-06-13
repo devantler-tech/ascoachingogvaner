@@ -56,7 +56,7 @@
 					>
 						<span class="text-sm text-ink"
 							>{item.title}{#if Number(item.year) === currentYear}<span
-									class="ml-2 inline-block animate-pulse rounded-full bg-clay px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wider text-canvas"
+									class="ml-2 inline-block rounded-full bg-clay px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wider text-canvas"
 									>Ny</span
 								>{/if}</span
 						>
