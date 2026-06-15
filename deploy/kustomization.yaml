@@ -6,5 +6,6 @@ resources:
   - external-dns-serviceaccount.yaml
   - httproute.yaml
   - httproute-www.yaml
+  - pod-disruption-budget.yaml
   - service.yaml
   - simply-credentials-externalsecret.yaml
