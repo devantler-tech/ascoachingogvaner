@@ -5,11 +5,23 @@
 	import ContactForm from '$lib/components/ContactForm.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { about, contact, freeIntro, pricingNote, site } from '$lib/content.js';
+	import { structuredDataScript } from '$lib/structured-data.js';
 
 	// "Ny" badge marks credentials earned this calendar year; it drops off
 	// automatically once the year rolls over (recomputed on the client).
 	const currentYear = new Date().getFullYear();
 </script>
+
+<svelte:head>
+	<!-- schema.org JSON-LD (LocalBusiness/ProfessionalService + Service + Person),
+	     built from content.ts so it stays in sync with the visible copy. {@html} is
+	     the only way to emit a JSON-LD <script> in Svelte (a literal element would
+	     HTML-escape the JSON and corrupt it); the payload is build-time constants,
+	     not user input, and serializeJsonLd() escapes "<" so it can't break out of
+	     the element — so this @html is XSS-safe. -->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	{@html structuredDataScript}
+</svelte:head>
 
 <Hero />
 
@@ -44,7 +56,7 @@
 					>
 						<span class="text-sm text-ink"
 							>{item.title}{#if Number(item.year) === currentYear}<span
-									class="ml-2 inline-block animate-pulse rounded-full bg-clay px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wider text-canvas"
+									class="ml-2 inline-block rounded-full bg-clay px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wider text-canvas"
 									>Ny</span
 								>{/if}</span
 						>

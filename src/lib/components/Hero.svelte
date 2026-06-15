@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { trackEvent } from '$lib/analytics.js';
 	import { site } from '$lib/content.js';
 	import Icon from './Icon.svelte';
 </script>
@@ -28,6 +29,7 @@
 					href={site.bookingUrl}
 					target="_blank"
 					rel="noopener noreferrer"
+					onclick={() => trackEvent('book-intro-click')}
 					class="inline-flex items-center gap-2 rounded-full bg-forest-700 px-7 py-3.5 font-medium text-canvas transition-colors hover:bg-forest-900"
 				>
 					Book en gratis startsamtale
@@ -44,11 +46,14 @@
 
 		<div class="relative">
 			<div class="aspect-[4/5] overflow-hidden rounded-[2rem] bg-sage-100 shadow-soft">
-				<img
-					src="/alette-hero.jpg"
+				<!-- Above-the-fold hero: enhancedImages() emits AVIF/WebP + responsive widths
+				     with a JPEG fallback at build time (see vite.config). fetchpriority high,
+				     never lazy-loaded; the 4/5 container fixes the box so there is no CLS. -->
+				<enhanced:img
+					src="$lib/assets/alette-hero.jpg?w=640;960;1440"
+					sizes="(min-width: 1024px) 576px, 100vw"
 					alt="Alette, coach hos {site.name}"
-					width="1440"
-					height="1440"
+					fetchpriority="high"
 					class="h-full w-full object-cover object-top"
 				/>
 			</div>

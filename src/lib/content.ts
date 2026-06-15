@@ -16,10 +16,23 @@ export const site = {
 	phone: '+45 21 90 63 63',
 	cvr: '39561883',
 	address,
+	// Canonical production origin. The static `src/app.html` hardcodes this same
+	// host in its <link rel="canonical"> / Open Graph tags (it can't import this
+	// module); keep them in sync. Everything rendered by Svelte derives the URL
+	// from here so it stays single-source.
+	url: 'https://ascoachingogvaner.platform.devantler.tech/',
 	// Opens the visitor's default maps app (this Google Maps URL works on both
 	// desktop and mobile, and launches the app when one is installed).
 	mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.replace(/\n/g, ', '))}`,
 	bookingUrl: 'https://ascoaching.book.dk'
+};
+
+// The coach behind the business. Her name appears in the "Om mig" prose, but is
+// also kept here as a structured field so the JSON-LD `Person` (and any future
+// use) reads it from a single source rather than re-parsing the copy.
+export const coach = {
+	name: 'Alette',
+	jobTitle: 'Stresscoach og angstvejleder'
 };
 
 export interface NavLink {

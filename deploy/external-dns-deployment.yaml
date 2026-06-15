@@ -1,0 +1,138 @@
+# Tenant-owned external-dns: keeps the DNS records for ascoachingogvaner.dk
+# (DNS-hosted at simply.com) in sync with this tenant's own HTTPRoute
+# hostnames and the shared platform Gateway's load-balancer address. Two
+# containers: stock external-dns, plus the simply.com webhook provider
+# (https://github.com/uozalp/external-dns-simply-webhook — the only simply.com
+# provider in the official external-dns webhook registry; young project, so
+# pinned by digest) speaking to api.simply.com over localhost.
+#
+# Records it does NOT own (MX/mail, anything without its _externaldns. TXT
+# ownership marker) are never touched; scope is double-bounded by
+# --domain-filter and the sidecar's DOMAIN_FILTER.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: ascoachingogvaner
+  labels:
+    app.kubernetes.io/name: external-dns
+spec:
+  # Single replica, Recreate: external-dns has no leader election, and two
+  # concurrent reconcilers would race the simply.com API.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: external-dns
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: external-dns
+    spec:
+      serviceAccountName: external-dns
+      # The kube API watches are the whole point of this pod; the tenant
+      # convention of automountServiceAccountToken: false applies to the
+      # site workload, not this controller.
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: external-dns
+          image: registry.k8s.io/external-dns/external-dns:v0.21.0
+          args:
+            - --source=gateway-httproute
+            # Only this tenant's routes and the shared Gateway's namespace —
+            # matches the narrow RBAC the platform grants the SA above.
+            - --namespace=ascoachingogvaner
+            - --gateway-namespace=kube-system
+            - --domain-filter=ascoachingogvaner.dk
+            - --provider=webhook
+            - --webhook-provider-url=http://localhost:8080
+            - --policy=sync
+            - --registry=txt
+            - --txt-owner-id=ascoachingogvaner
+            - --txt-prefix=_externaldns.
+            # simply.com advertises rate limits only via X-RateLimit headers;
+            # poll gently — these records change ~never.
+            - --interval=5m
+            # Never publish private addresses if the Gateway ever exposes one.
+            - --exclude-target-net=10.0.0.0/8
+          ports:
+            - name: http
+              containerPort: 7979
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            capabilities:
+              drop: ["ALL"]
+        - name: simply-webhook
+          image: ghcr.io/uozalp/external-dns-simply-webhook:0.1.0@sha256:8a564b62c2dfb0089b6d51cff3198722ea72b8c7e1f4d8d057a2d1f3feb2cab4
+          env:
+            # Serves the webhook API and /healthz on one port; 8080 matches
+            # --webhook-provider-url above.
+            - name: PORT
+              value: "8080"
+            # Belt-and-braces with --domain-filter on the controller.
+            - name: DOMAIN_FILTER
+              value: ascoachingogvaner.dk
+            - name: SIMPLY_ACCOUNT_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: simply-credentials
+                  key: account-name
+            - name: SIMPLY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: simply-credentials
+                  key: api-key
+          ports:
+            - name: http-webhook
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http-webhook
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http-webhook
+            initialDelaySeconds: 5
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            capabilities:
+              drop: ["ALL"]
