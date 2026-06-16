@@ -1,0 +1,21 @@
+# Authorises the shared platform Gateway (kube-system) to terminate TLS with the
+# tenant-owned ascoachingogvaner-dk-tls Secret that lives in THIS namespace.
+# Gateway-API forbids cross-namespace Secret references unless the target
+# namespace grants them, so without this the https-ascoachingogvaner-dk listeners
+# the platform adds would stay ResolvedRefs=False. Scoped to the single Secret
+# (least privilege); the platform Gateway listener carries the matching
+# namespace+name in its certificateRefs.
+apiVersion: gateway.networking.k8s.io/v1
+kind: ReferenceGrant
+metadata:
+  name: gateway-to-ascoachingogvaner-dk-tls
+  namespace: ascoachingogvaner
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: kube-system
+  to:
+    - group: ""
+      kind: Secret
+      name: ascoachingogvaner-dk-tls

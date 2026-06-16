@@ -1,0 +1,19 @@
+# TLS certificate for the tenant-owned ascoachingogvaner.dk domain. Issued by
+# the tenant's namespaced Issuer (issuer.yaml) via the simply.com DNS01 solver,
+# into the ascoachingogvaner-dk-tls Secret in this namespace. The shared platform
+# Gateway in kube-system terminates TLS with this Secret across namespaces — the
+# platform adds the https-ascoachingogvaner-dk listeners and references this
+# Secret, and referencegrant.yaml authorises that cross-namespace read.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ascoachingogvaner-dk
+  namespace: ascoachingogvaner
+spec:
+  secretName: ascoachingogvaner-dk-tls
+  dnsNames:
+    - ascoachingogvaner.dk
+    - www.ascoachingogvaner.dk
+  issuerRef:
+    kind: Issuer
+    name: letsencrypt-prod
