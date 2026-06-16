@@ -5,8 +5,8 @@ metadata:
   namespace: ascoachingogvaner
 spec:
   parentRefs:
-    # The shared hostname-less HTTPS listener — serves the platform.devantler.tech
-    # and platform.lan hostnames under the platform wildcard certificate.
+    # The shared hostname-less HTTPS listener under the platform wildcard
+    # certificate — used here only for the local/dev platform.lan host.
     - name: platform
       namespace: kube-system
       sectionName: https
@@ -22,9 +22,6 @@ spec:
     # them in): the customer domain, DNS-managed at simply.com by the
     # platform's external-dns-simply instance...
     - ascoachingogvaner.dk
-    # ...the platform subdomain, DNS-managed at Cloudflare by the platform's
-    # external-dns instance...
-    - ascoachingogvaner.platform.devantler.tech
     # ...and the host-file hostname used on local/dev clusters.
     - ascoachingogvaner.platform.lan
   rules:

@@ -41,7 +41,7 @@
 	<nav class="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
 		<a href="#top" class="flex items-center gap-2 text-forest-900" onclick={() => (open = false)}>
 			<img src="/logo.png" alt="" class="h-10 w-10 rounded-full object-cover" />
-			<span class="font-serif text-lg leading-tight">{site.short}</span>
+			<span class="font-serif text-lg leading-tight">{site.name}</span>
 		</a>
 
 		<ul class="hidden items-center gap-1 md:flex">

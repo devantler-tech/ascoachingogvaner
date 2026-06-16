@@ -72,7 +72,6 @@ export function buildStructuredData(): Record<string, unknown> {
 		'@type': 'ProfessionalService',
 		'@id': businessId,
 		name: site.name,
-		alternateName: site.short,
 		description: site.intro,
 		slogan: site.tagline,
 		url: site.url,
