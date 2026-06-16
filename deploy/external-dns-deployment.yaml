@@ -54,7 +54,15 @@ spec:
             - --policy=sync
             - --registry=txt
             - --txt-owner-id=ascoachingogvaner
-            - --txt-prefix=_externaldns.
+            # Put the record type in the prefix via %{record_type} instead of
+            # external-dns's default a-/aaaa- *name* prefix. At the zone apex the
+            # default produces "_externaldns.a-ascoachingogvaner.dk", whose "a-"
+            # fuses with the apex label, so the simply.com provider reads it as
+            # the (non-existent) zone "a-ascoachingogvaner.dk" and 404s — leaving
+            # the apex A/AAAA unmanaged (the apex silently keeps any pre-existing
+            # record). "_externaldns-a.<name>" stays a clean in-zone subdomain
+            # for the apex and subdomains alike.
+            - --txt-prefix=_externaldns-%{record_type}.
             # simply.com advertises rate limits only via X-RateLimit headers;
             # poll gently — these records change ~never.
             - --interval=5m
