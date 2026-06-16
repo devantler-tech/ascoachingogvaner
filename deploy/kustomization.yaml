@@ -8,4 +8,5 @@ resources:
   - httproute-www.yaml
   - pod-disruption-budget.yaml
   - service.yaml
+  - simply-credentials-seed.yaml
   - simply-credentials-externalsecret.yaml
