@@ -10,3 +10,9 @@ resources:
   - service.yaml
   - simply-credentials-seed.yaml
   - simply-credentials-externalsecret.yaml
+  # Tenant-owned TLS for ascoachingogvaner.dk: namespaced ACME Issuer (simply.com
+  # DNS01) + Certificate + a ReferenceGrant so the shared platform Gateway can
+  # terminate TLS with the resulting Secret cross-namespace.
+  - issuer.yaml
+  - certificate.yaml
+  - referencegrant.yaml

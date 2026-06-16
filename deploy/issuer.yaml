@@ -1,0 +1,32 @@
+# Tenant-owned cert-manager Issuer for the ascoachingogvaner.dk TLS certificate
+# (see certificate.yaml). NAMESPACED (not the shared platform ClusterIssuer) on
+# purpose: a namespaced Issuer makes cert-manager resolve the DNS01 webhook
+# solver credential from THIS namespace, so the certificate chain reuses the
+# tenant's own simply-credentials Secret (simply-credentials-externalsecret.yaml)
+# instead of a platform-namespace copy. That keeps the whole TLS chain — issuer,
+# credential and certificate — inside the tenant, delivered by the tenant's own
+# Flux Kustomization, exactly like the tenant-owned external-dns. The simply.com
+# DNS01 webhook solver itself is a cluster-wide platform capability
+# (cert-manager + the runnerm simply-dns-webhook), referenced here by groupName.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-prod
+  namespace: ascoachingogvaner
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: ned@devantler.tech
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+      - dns01:
+          webhook:
+            # Cluster-wide simply.com DNS01 solver served by the platform's
+            # runnerm simply-dns-webhook; the groupName/solverName pair is fixed
+            # by that chart. cert-manager reads config.secretName from THIS
+            # Issuer's namespace (the webhook SA has cluster-wide secrets:get).
+            groupName: com.github.runnerm.cert-manager-simply-webhook
+            solverName: simply-dns-solver
+            config:
+              secretName: simply-credentials
