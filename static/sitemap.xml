@@ -3,7 +3,7 @@
      anchors, not separate routes, so there is nothing else to enumerate. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://ascoachingogvaner.platform.devantler.tech/</loc>
+    <loc>https://ascoachingogvaner.dk/</loc>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>

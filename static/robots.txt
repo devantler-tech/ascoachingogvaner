@@ -2,4 +2,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ascoachingogvaner.platform.devantler.tech/sitemap.xml
+Sitemap: https://ascoachingogvaner.dk/sitemap.xml

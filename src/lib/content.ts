@@ -8,7 +8,6 @@ const address = 'Fjordagervej 20U, 1. sal\n6100 Haderslev';
 // build time (no runtime env). Bookings happen in an external booking system.
 export const site = {
 	name: 'AS - Coaching, vaner og ro',
-	short: 'AS - Coaching',
 	tagline: 'Energi, nærvær og indre styrke',
 	intro:
 		'Få overskud i hverdagen og skab rum for personlig udvikling. Jeg hjælper dig med at finde balancen og skabe gode vaner, der giver energi.',
@@ -20,7 +19,7 @@ export const site = {
 	// host in its <link rel="canonical"> / Open Graph tags (it can't import this
 	// module); keep them in sync. Everything rendered by Svelte derives the URL
 	// from here so it stays single-source.
-	url: 'https://ascoachingogvaner.platform.devantler.tech/',
+	url: 'https://ascoachingogvaner.dk/',
 	// Opens the visitor's default maps app (this Google Maps URL works on both
 	// desktop and mobile, and launches the app when one is installed).
 	mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.replace(/\n/g, ', '))}`,
@@ -182,7 +181,7 @@ export const about = {
 	lead: 'Jeg brænder for at hjælpe mennesker med at finde indre ro, balance og overskud i hverdagen.',
 	paragraphs: [
 		'Jeg hedder Alette. Min vej ind i coaching er personlig: jeg har selv haft stress inde på livet to gange og har kæmpet med angst, et svært forhold til mad og traumer fra barndommen. Den rejse lærte mig, hvad der skal til for at finde tilbage til sig selv, og det er præcis det, jeg i dag hjælper andre med.',
-		'Gennem snart otte år har jeg arbejdet som personlig træner og vanecoach hos Fitliv i Haderslev, og det gør jeg fortsat på deltid. Jeg er professionsbachelor i ernæring og sundhed og uddannet personlig træner, vanecoach og overspisningscoach.',
+		'Gennem snart otte år har jeg arbejdet som personlig træner og vanecoach hos Fitliv i Haderslev, og det gør jeg fortsat på deltid. Jeg har en professionsbachelor i ernæring og sundhed og uddannet personlig træner, vanecoach og overspisningscoach.',
 		'Senere har jeg specialiseret mig i det sociale nervesystem, restorativ sanseterapi og udviklingstraumer, og jeg er certificeret stresscoach og angstvejleder. I forløbene kombinerer jeg viden om nervesystemet med konkrete, kropsnære redskaber, så vi sammen kan arbejde med stress, angst, vaner og dit forhold til mad. Du sætter retningen, og jeg går ved siden af dig.'
 	],
 	values: [
