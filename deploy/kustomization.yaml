@@ -8,6 +8,13 @@ resources:
   - httproute-www.yaml
   - pod-disruption-budget.yaml
   - service.yaml
+  # Tenant-owned CiliumNetworkPolicy allow-lists (layered on the platform's
+  # default-deny floor): the app's Gateway ingress + DNS egress, and the
+  # external-dns pods' egress to the kube-apiserver + simply.com API.
+  - networkpolicy.yaml
+  - external-dns-networkpolicy.yaml
+  # Namespaced SecretStore backing the simply.com credentials below.
+  - secretstore.yaml
   - simply-credentials-seed.yaml
   - simply-credentials-externalsecret.yaml
   # Tenant-owned TLS for ascoachingogvaner.dk: namespaced ACME Issuer (simply.com

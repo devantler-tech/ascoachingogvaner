@@ -1,0 +1,35 @@
+# Tenant-owned allow-list for ascoachingogvaner, layered on top of the
+# platform's default-deny floor (the platform's `add-default-deny` Kyverno
+# policy generates a deny-all + allow-dns CiliumNetworkPolicy in this namespace;
+# this re-opens only what the app needs). Owned here in the tenant repo so a new
+# egress never requires a platform change — applied by the tenant's own Flux
+# Kustomization, which the platform's `cilium-tenant-edit` ClusterRole permits.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: app
+  namespace: ascoachingogvaner
+  labels:
+    app.kubernetes.io/name: app
+spec:
+  endpointSelector: {}
+  ingress:
+    # Gateway ingress — static site served by unprivileged nginx on 8080
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+  egress:
+    # DNS resolution
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP

@@ -1,0 +1,47 @@
+# Egress for the tenant-owned external-dns pods (deployed from this repo's
+# external-dns-deployment.yaml). The namespace-wide `app` policy only opens DNS,
+# so the controller's two upstreams are allowed here, scoped to its pods: the
+# kube-apiserver (HTTPRoute/Gateway watches) and the simply.com API the webhook
+# sidecar manages DNS records through — FQDN-pinned rather than world:443 so a
+# compromised pod cannot reach arbitrary external services.
+#
+# Tenant-owned (was platform-side) — applied by this tenant's Flux Kustomization
+# under the platform's `cilium-tenant-edit` grant. The privileged RBAC the
+# external-dns SA needs to read the shared Gateway in kube-system stays on the
+# platform (external-dns-rbac.yaml in the registration dir).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: external-dns
+  namespace: ascoachingogvaner
+  labels:
+    app.kubernetes.io/name: external-dns
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: external-dns
+  egress:
+    - toEntities:
+        - kube-apiserver
+    - toFQDNs:
+        - matchName: "api.simply.com"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    # DNS resolution via Cilium's L7 DNS proxy, restricted to the names this
+    # pod actually needs to resolve (closes off DNS-tunneling exfil).
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+          rules:
+            dns:
+              - matchName: "api.simply.com"
+              - matchPattern: "*.cluster.local"
