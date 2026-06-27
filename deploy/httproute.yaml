@@ -3,6 +3,18 @@ kind: HTTPRoute
 metadata:
   name: ascoachingogvaner
   namespace: ascoachingogvaner
+  # Homepage dashboard entry. These gethomepage.dev/* annotations are tenant
+  # self-presentation, so they live here in the tenant artifact rather than
+  # being injected by the platform's hetzner overlay — the platform's homepage
+  # app discovers them on this HTTPRoute cluster-wide wherever they are authored.
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: AS - Coaching, vaner og ro
+    gethomepage.dev/description: Personal/business static site.
+    gethomepage.dev/group: Customer Sites
+    gethomepage.dev/icon: mdi-account-tie
+    gethomepage.dev/href: https://ascoachingogvaner.dk
+    gethomepage.dev/pod-selector: app.kubernetes.io/name=ascoachingogvaner
 spec:
   parentRefs:
     # The shared hostname-less HTTPS listener under the platform wildcard
