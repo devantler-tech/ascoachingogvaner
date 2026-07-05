@@ -57,9 +57,31 @@ spec:
               memory: 64Mi
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false
+            # Kubescape C-0017 (immutable container filesystem). The app's own
+            # spec carries the hardening — the writable-path set below is a
+            # property of this image (nginx-unprivileged), so it belongs here,
+            # not in a platform-side patch (platform#2489).
+            readOnlyRootFilesystem: true
             capabilities:
               drop: [ALL]
+          # nginx-unprivileged writes to a small set of paths at runtime; with a
+          # read-only root they must be backed by writable emptyDirs or nginx
+          # crashes on startup ("mkdir ... Read-only file system"). Verified
+          # against the live pod's effective config (nginx -T):
+          #   * /tmp             REQUIRED — pid (/tmp/nginx.pid) + all temp paths
+          #                      (client_body/proxy/fastcgi/uwsgi/scgi_temp).
+          #   * /var/cache/nginx defensive — present in the base image; unused by
+          #                      this purely-static config today.
+          #   * /var/run         defensive — nginx-unprivileged's canonical
+          #                      writable set. Logs go to /dev/stdout+/dev/stderr,
+          #                      so no /var/log mount; docroot stays read-only.
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
           livenessProbe:
             httpGet:
               path: /
@@ -72,3 +94,13 @@ spec:
               port: 8080
             initialDelaySeconds: 3
             periodSeconds: 5
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+        - name: nginx-cache
+          emptyDir:
+            sizeLimit: 256Mi
+        - name: nginx-run
+          emptyDir:
+            sizeLimit: 64Mi
