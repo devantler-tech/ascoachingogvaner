@@ -47,6 +47,8 @@
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
+		<!-- Tailwind's `contents` utility replaces the inline style attribute so
+		     style-src in the CSP (svelte.config.js) needs no 'unsafe-inline'. -->
+		<div class="contents">%sveltekit.body%</div>
 	</body>
 </html>
