@@ -63,3 +63,31 @@ test('contact form reports Danish validation messages', async ({ page }) => {
 		'Udfyld venligst dette felt.'
 	);
 });
+
+test('typography renders with the self-hosted font families (#98)', async ({ page }) => {
+	await page.goto('/');
+
+	// The brand fonts are same-origin build assets; the computed styles must
+	// resolve to them (a broken @import or family rename would silently fall
+	// back to Georgia/system-ui).
+	const headingFont = await page
+		.getByRole('heading', { level: 1 })
+		.evaluate((el) => getComputedStyle(el).fontFamily);
+	expect(headingFont).toContain('Lora Variable');
+
+	const bodyFont = await page
+		.locator('body')
+		.evaluate((el) => getComputedStyle(el).fontFamily);
+	expect(bodyFont).toContain('Inter Variable');
+
+	// Both families report as loaded by the CSS Font Loading API.
+	const loaded = await page.evaluate(async () => {
+		await document.fonts.ready;
+
+		return {
+			lora: document.fonts.check('16px "Lora Variable"'),
+			inter: document.fonts.check('16px "Inter Variable"')
+		};
+	});
+	expect(loaded).toEqual({ lora: true, inter: true });
+});
