@@ -1,3 +1,11 @@
+/* Self-hosted fonts (#98): the fontsource packages bundle the woff2 files as
+   same-origin build assets (unicode-range-subsetted, font-display: swap), so
+   no request leaves the site origin for fonts and the CSP carries no fonts
+   origins. Inter's discrete 300–700 weights and Lora's 400–700 roman+italic
+   ranges are covered by the variable fonts' wght axes. */
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/lora';
+@import '@fontsource-variable/lora/wght-italic.css';
 @import 'tailwindcss';
 
 @theme {
@@ -15,8 +23,8 @@
 	--color-ink: #2b332c;
 	--color-muted: #5e6b60;
 
-	--font-serif: 'Lora', Georgia, serif;
-	--font-sans: 'Inter', system-ui, sans-serif;
+	--font-serif: 'Lora Variable', Georgia, serif;
+	--font-sans: 'Inter Variable', system-ui, sans-serif;
 
 	--shadow-soft: 0 10px 40px -12px rgba(36, 53, 40, 0.18);
 }

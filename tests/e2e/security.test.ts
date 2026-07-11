@@ -2,10 +2,11 @@ import { test, expect } from '@playwright/test';
 
 // The Content-Security-Policy is a tested invariant (#97): every prerendered
 // page carries a CSP <meta> tag (svelte.config.js kit.csp) that must keep
-// allowing exactly the site's two external origins (self-hosted Umami
-// analytics, Google Fonts) while hashing SvelteKit's inline hydration script.
-// A directive typo would silently break analytics, fonts or hydration in
-// production, so the page is exercised under the enforced policy here.
+// allowing exactly the site's one external origin (self-hosted Umami
+// analytics — fonts are self-hosted build assets since #98) while hashing
+// SvelteKit's inline hydration script. A directive typo would silently break
+// analytics or hydration in production, so the page is exercised under the
+// enforced policy here.
 
 test('CSP meta tag allows exactly what the page needs, with zero violations', async ({ page }) => {
 	const violations: string[] = [];
@@ -16,8 +17,17 @@ test('CSP meta tag allows exactly what the page needs, with zero violations', as
 		}
 	});
 
-	const fontsCss = page.waitForResponse((response) =>
-		response.url().startsWith('https://fonts.googleapis.com/')
+	// Fonts are self-hosted (#98): a same-origin woff2 must load, and no
+	// request of any kind may leave the origin for fonts.
+	const fontRequests: string[] = [];
+	page.on('request', (request) => {
+		if (request.url().includes('fonts.g') || request.resourceType() === 'font') {
+			fontRequests.push(request.url());
+		}
+	});
+
+	const selfHostedFont = page.waitForResponse(
+		(response) => response.url().includes('/_app/immutable/') && response.url().endsWith('.woff2')
 	);
 	await page.goto('/');
 
@@ -26,13 +36,17 @@ test('CSP meta tag allows exactly what the page needs, with zero violations', as
 		.getAttribute('content');
 	expect(csp).toContain("default-src 'self'");
 	expect(csp).toContain('https://analytics.platform.devantler.tech');
-	expect(csp).toContain('https://fonts.googleapis.com');
-	expect(csp).toContain('https://fonts.gstatic.com');
+	expect(csp).not.toContain('fonts.googleapis.com');
+	expect(csp).not.toContain('fonts.gstatic.com');
 	expect(csp).toContain('sha256-'); // SvelteKit hashed the inline hydration script
 
-	// The two external consumers survive the policy: the fonts stylesheet
-	// actually loads and the analytics script tag is still in the head.
-	expect((await fontsCss).ok()).toBe(true);
+	// The typography self-hosts under the policy — the variable fonts load from
+	// the site origin — and the analytics script tag is still in the head.
+	expect((await selfHostedFont).ok()).toBe(true);
+	expect(
+		fontRequests.filter((url) => !url.startsWith('http://localhost:4173/')),
+		'no font request may leave the site origin'
+	).toEqual([]);
 	await expect(
 		page.locator('script[src^="https://analytics.platform.devantler.tech/"]')
 	).toHaveAttribute('defer', '');
