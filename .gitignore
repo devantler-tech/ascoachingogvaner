@@ -8,4 +8,5 @@ build/
 !.env.example
 test-results/
 playwright-report/
+.lighthouseci/
 .playwright-mcp/
