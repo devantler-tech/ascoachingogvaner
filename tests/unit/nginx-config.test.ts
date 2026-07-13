@@ -67,14 +67,18 @@ describe('booking URL single source', () => {
 	])(
 		'rejects a booking URL with nginx metacharacters: %s',
 		(badUrl) => {
-			outDir = mkdtempSync(join(tmpdir(), 'nginx-conf-'));
-			mkdirSync(join(outDir, 'src/lib'), { recursive: true });
-			mkdirSync(join(outDir, 'docker'), { recursive: true });
-			cpSync('docker/nginx.conf.template', join(outDir, 'docker/nginx.conf.template'));
-			cpSync(renderScript, join(outDir, renderScript));
-			writeFileSync(join(outDir, 'src/lib/site-config.json'), JSON.stringify({ ...siteConfig, bookingUrl: badUrl }));
+			// Bind the temp dir to a const so it stays narrowed to `string` inside
+			// the nested toThrow() callback (TS won't narrow the mutable `outDir`
+			// capture across a closure boundary); outDir still tracks it for cleanup.
+			const dir = mkdtempSync(join(tmpdir(), 'nginx-conf-'));
+			outDir = dir;
+			mkdirSync(join(dir, 'src/lib'), { recursive: true });
+			mkdirSync(join(dir, 'docker'), { recursive: true });
+			cpSync('docker/nginx.conf.template', join(dir, 'docker/nginx.conf.template'));
+			cpSync(renderScript, join(dir, renderScript));
+			writeFileSync(join(dir, 'src/lib/site-config.json'), JSON.stringify({ ...siteConfig, bookingUrl: badUrl }));
 
-			expect(() => execFileSync('node', [renderScript, join(outDir, 'out/default.conf')], { cwd: outDir })).toThrow(
+			expect(() => execFileSync('node', [renderScript, join(dir, 'out/default.conf')], { cwd: dir })).toThrow(
 				/not a plain https URL/,
 			);
 		},
