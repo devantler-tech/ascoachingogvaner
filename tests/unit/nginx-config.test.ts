@@ -60,6 +60,10 @@ describe('booking URL single source', () => {
 		'https://vendor.example/"book"',
 		'https://?book',
 		'https://%',
+		// new URL() silently normalizes missing-slash typos, but nginx would emit
+		// the raw string verbatim — the render must reject them, not rely on parsing.
+		'https:/vendor.example/book',
+		'https:vendor.example/book',
 	])(
 		'rejects a booking URL with nginx metacharacters: %s',
 		(badUrl) => {
