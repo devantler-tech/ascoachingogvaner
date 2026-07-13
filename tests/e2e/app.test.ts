@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import siteConfig from '../../src/lib/site-config.json';
 
 test('homepage shows hero and primary CTA', async ({ page }) => {
 	await page.goto('/');
@@ -24,7 +25,9 @@ test('nav links scroll to the matching sections on one page', async ({ page }) =
 test('Book tid links out to the external booking system', async ({ page }) => {
 	await page.goto('/');
 	const bookCta = page.getByRole('navigation').getByRole('link', { name: /book tid/i }).first();
-	await expect(bookCta).toHaveAttribute('href', 'https://ascoaching.book.dk');
+	// Same single source the site code and the nginx render consume, so a
+	// booking-vendor move stays a one-file edit (issue #100).
+	await expect(bookCta).toHaveAttribute('href', siteConfig.bookingUrl);
 	await expect(bookCta).toHaveAttribute('target', '_blank');
 });
 

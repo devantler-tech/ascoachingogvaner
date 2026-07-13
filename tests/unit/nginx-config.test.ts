@@ -51,8 +51,16 @@ describe('booking URL single source', () => {
 
 	// nginx reads # as a comment and $ as a variable inside `return 301 ...;`,
 	// so a vendor URL carrying either must abort the render instead of shipping
-	// a config that breaks or redirects wrong.
-	it.each(['https://vendor.example/#/book', 'https://vendor.example/book$id', 'https://vendor.example/"book"'])(
+	// a config that breaks or redirects wrong. The last cases pass the character
+	// class but do not parse as an https URL with a hostname — a config typo
+	// that must fail the build rather than ship an unusable Location target.
+	it.each([
+		'https://vendor.example/#/book',
+		'https://vendor.example/book$id',
+		'https://vendor.example/"book"',
+		'https://?book',
+		'https://%',
+	])(
 		'rejects a booking URL with nginx metacharacters: %s',
 		(badUrl) => {
 			outDir = mkdtempSync(join(tmpdir(), 'nginx-conf-'));

@@ -109,10 +109,18 @@ jobs:
       # must 301 /book-tid to the URL defined once in src/lib/site-config.json.
       - run: |
           docker run -d --rm -p 8080:8080 --name asc-smoke asc-smoke
+          # Fail closed: a homepage that never becomes ready is a broken image,
+          # even if the explicit /book-tid redirect below would still answer.
+          ready=false
           for _ in $(seq 1 30); do
-            curl -fsS -o /dev/null http://localhost:8080/ && break
+            if curl -fsS -o /dev/null http://localhost:8080/; then ready=true; break; fi
             sleep 1
           done
+          if [ "$ready" != true ]; then
+            docker stop asc-smoke
+            echo "::error::container homepage did not become ready within 30s"
+            exit 1
+          fi
           expected=$(node -p "require('./src/lib/site-config.json').bookingUrl")
           code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/book-tid)
           location=$(curl -sI http://localhost:8080/book-tid | tr -d '\r' | awk 'tolower($1)=="location:" {print $2}')
