@@ -4,10 +4,13 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 COPY . .
 RUN npm run build
+# The nginx config is rendered from its template with the booking URL taken
+# from src/lib/site-config.json — the same single source the site imports.
+RUN node docker/render-nginx-conf.mjs build-docker/default.conf
 
 # Static site: serve the prerendered output with an unprivileged nginx.
 FROM nginxinc/nginx-unprivileged:1-alpine
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/build-docker/default.conf /etc/nginx/conf.d/default.conf
 COPY docker/security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY --from=build /app/build /usr/share/nginx/html
 EXPOSE 8080

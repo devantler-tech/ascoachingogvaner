@@ -97,10 +97,43 @@ jobs:
       # to enforce once the numbers prove stable across releases.
       - run: npm run test:perf
 
+  container-smoke:
+    name: Container Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - run: docker build -t asc-smoke .
+      # Verifies the rendered nginx config end-to-end: the running container
+      # must 301 /book-tid to the URL defined once in src/lib/site-config.json.
+      - run: |
+          docker run -d --rm -p 8080:8080 --name asc-smoke asc-smoke
+          # Fail closed: a homepage that never becomes ready is a broken image,
+          # even if the explicit /book-tid redirect below would still answer.
+          ready=false
+          for _ in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://localhost:8080/; then ready=true; break; fi
+            sleep 1
+          done
+          if [ "$ready" != true ]; then
+            docker stop asc-smoke
+            echo "::error::container homepage did not become ready within 30s"
+            exit 1
+          fi
+          expected=$(node -p "require('./src/lib/site-config.json').bookingUrl")
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/book-tid)
+          location=$(curl -sI http://localhost:8080/book-tid | tr -d '\r' | awk 'tolower($1)=="location:" {print $2}')
+          docker stop asc-smoke
+          if [ "$code" != "301" ] || [ "$location" != "$expected" ]; then
+            echo "::error::expected 301 -> $expected, got $code -> $location"
+            exit 1
+          fi
+
   ci-required-checks:
     name: CI - Required Checks
     runs-on: ubuntu-latest
-    needs: [lint, check, test, e2e, build, lighthouse]
+    needs: [lint, check, test, e2e, build, lighthouse, container-smoke]
     permissions: {}
     if: ${{ always() }}
     steps:
@@ -114,3 +147,4 @@ jobs:
             ${{ needs.e2e.result }}
             ${{ needs.build.result }}
             ${{ needs.lighthouse.result }}
+            ${{ needs.container-smoke.result }}

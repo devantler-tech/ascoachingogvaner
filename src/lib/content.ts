@@ -2,6 +2,8 @@
 // it everywhere it is rendered. Prices and package details mirror the current
 // ascoachingogvaner.dk offering.
 
+import siteConfig from './site-config.json';
+
 const address = 'Fjordagervej 20U, 1. sal\n6100 Haderslev';
 
 // The site is fully static, so these public contact details are baked in at
@@ -23,7 +25,10 @@ export const site = {
 	// Opens the visitor's default maps app (this Google Maps URL works on both
 	// desktop and mobile, and launches the app when one is installed).
 	mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.replace(/\n/g, ', '))}`,
-	bookingUrl: 'https://ascoaching.book.dk'
+	// Defined once in site-config.json: the Docker build renders the nginx
+	// /book-tid redirect from the same file, so a booking-vendor change is a
+	// one-file edit (issue #100).
+	bookingUrl: siteConfig.bookingUrl
 };
 
 // The coach behind the business. Her name appears in the "Om mig" prose, but is
