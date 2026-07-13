@@ -1,5 +1,12 @@
+import { readFileSync } from 'node:fs';
+
 import { test, expect } from '@playwright/test';
-import siteConfig from '../../src/lib/site-config.json';
+
+// Read (not import) the JSON: this package is ESM, where a bare JSON import
+// needs `with { type: 'json' }` that not every loader in the toolchain accepts.
+const siteConfig = JSON.parse(
+	readFileSync(new URL('../../src/lib/site-config.json', import.meta.url), 'utf8')
+);
 
 test('homepage shows hero and primary CTA', async ({ page }) => {
 	await page.goto('/');
