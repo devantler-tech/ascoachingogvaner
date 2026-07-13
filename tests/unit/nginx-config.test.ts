@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -48,4 +48,23 @@ describe('booking URL single source', () => {
 		expect(template).not.toContain(bookingHost);
 		expect(template).toContain('__BOOKING_URL__');
 	});
+
+	// nginx reads # as a comment and $ as a variable inside `return 301 ...;`,
+	// so a vendor URL carrying either must abort the render instead of shipping
+	// a config that breaks or redirects wrong.
+	it.each(['https://vendor.example/#/book', 'https://vendor.example/book$id', 'https://vendor.example/"book"'])(
+		'rejects a booking URL with nginx metacharacters: %s',
+		(badUrl) => {
+			outDir = mkdtempSync(join(tmpdir(), 'nginx-conf-'));
+			mkdirSync(join(outDir, 'src/lib'), { recursive: true });
+			mkdirSync(join(outDir, 'docker'), { recursive: true });
+			cpSync('docker/nginx.conf.template', join(outDir, 'docker/nginx.conf.template'));
+			cpSync(renderScript, join(outDir, renderScript));
+			writeFileSync(join(outDir, 'src/lib/site-config.json'), JSON.stringify({ ...siteConfig, bookingUrl: badUrl }));
+
+			expect(() => execFileSync('node', [renderScript, join(outDir, 'out/default.conf')], { cwd: outDir })).toThrow(
+				/not a plain https URL/,
+			);
+		},
+	);
 });

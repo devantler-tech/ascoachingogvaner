@@ -10,9 +10,10 @@ const outPath = process.argv[2] ?? 'build-docker/default.conf';
 
 const { bookingUrl } = JSON.parse(readFileSync('src/lib/site-config.json', 'utf8'));
 
-// nginx would treat whitespace/;/{ } as config syntax, so a URL carrying them
+// nginx would treat whitespace/;/{ } as config syntax, # as a comment, $ as a
+// variable, and quotes/backslash as escaping — a URL carrying any of them
 // must never be substituted into the config.
-if (typeof bookingUrl !== 'string' || !/^https:\/\/[^\s;{}]+$/.test(bookingUrl)) {
+if (typeof bookingUrl !== 'string' || !/^https:\/\/[^\s;{}#$"'\\]+$/.test(bookingUrl)) {
 	throw new Error(`site-config.json bookingUrl is missing or not a plain https URL: ${bookingUrl}`);
 }
 
