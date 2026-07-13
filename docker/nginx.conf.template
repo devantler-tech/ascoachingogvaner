@@ -18,7 +18,7 @@ server {
     location = /services { return 301 /#services; }
     location = /om-mig { return 301 /#om-mig; }
     location = /kontakt { return 301 /#kontakt; }
-    location = /book-tid { return 301 https://ascoaching.book.dk; }
+    location = /book-tid { return 301 __BOOKING_URL__; }
 
     # Hashed build assets are immutable and safe to cache aggressively. The
     # Cache-Control add_header suppresses the inherited server-level headers,

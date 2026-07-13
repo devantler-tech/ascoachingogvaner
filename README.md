@@ -24,7 +24,7 @@ Hele siden er én sammenhængende side; navigationen scroller til det relevante 
 - [`@sveltejs/adapter-static`](https://svelte.dev/docs/kit/adapter-static): hele siden prerenderes til statisk HTML
 - [TailwindCSS v4](https://tailwindcss.com)
 - [Vitest](https://vitest.dev) (unit) + [Playwright](https://playwright.dev) (E2E)
-- Serveres i produktion af nginx (se `Dockerfile` og `docker/nginx.conf`)
+- Serveres i produktion af nginx (se `Dockerfile` og `docker/nginx.conf.template`, renderet ved build fra `src/lib/site-config.json`)
 
 ## Kør lokalt
 
