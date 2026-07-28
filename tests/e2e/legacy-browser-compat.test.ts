@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type APIRequestContext } from '@playwright/test';
 import { parse } from 'acorn';
 
 /**
@@ -19,7 +19,7 @@ import { parse } from 'acorn';
  * bump and a silently unstyled site.
  */
 
-async function fetchText(request: import('@playwright/test').APIRequestContext, url: string) {
+async function fetchText(request: APIRequestContext, url: string) {
 	const response = await request.get(url);
 	expect(response.ok(), `${url} should be served`).toBe(true);
 	return response.text();
@@ -94,6 +94,11 @@ test.describe('legacy browser compatibility', () => {
 			}
 		}
 
-		expect(seen.size, 'should have walked the whole reachable module graph').toBeGreaterThan(1);
+		// Strictly more than the entry modules: the entries import shared chunks,
+		// so an equal count means the import-following regex stopped matching and
+		// the walk silently shrank to the two entry points.
+		expect(seen.size, 'should have followed imports beyond the entry modules').toBeGreaterThan(
+			entries.length
+		);
 	});
 });
