@@ -12,6 +12,13 @@
 - Served in production by nginx (see `Dockerfile` and `docker/nginx.conf.template`, rendered at build time from `src/lib/site-config.json` — the booking URL single source)
 - Node.js >= 22, npm (build-time only)
 
+**Browser support floor — Safari 13.1.** Visitors on macOS 10.13 High Sierra and 10.14 Mojave cannot update past Safari 13.1.2 / 14.1.2, so the built site must stay parseable by them. Two build steps enforce this and **neither is optional**:
+
+- `vite-plugins/flatten-cascade-layers.ts` rewrites the emitted CSS, because Tailwind v4 puts every token, reset and utility inside `@layer` (Safari 15.4+) and an engine that does not know an at-rule discards its block too — leaving a completely unstyled page.
+- `environments.client.build.target` in `vite.config.ts` downlevels the client bundle, because Svelte 5's runtime otherwise ships private class fields and logical assignment, which are *parse* errors before Safari 14.1 and kill hydration.
+
+Both failures are silent on a modern engine — no build error, no console warning — so `tests/e2e/legacy-browser-compat.test.ts` is the only thing that catches a regression. Keep it green; never satisfy it by deleting styles.
+
 ## Structure
 
 - `src/routes/` — `(site)` is a single prerendered public page (hero plus `services`, `om-mig`, and a combined `kontakt` contact/booking section reached via in-page anchor links). `+layout.ts` sets `prerender = true` for the whole site; `+error.svelte` is the fallback page.
