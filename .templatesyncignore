@@ -19,3 +19,18 @@ deploy/
 scripts/rename-placeholders.sh
 scripts/rename-placeholders.test.sh
 .github/workflows/validate-scaffold.yaml
+
+# Template-only validation contracts depend on scaffold and Platform fixtures
+# that do not exist in a live tenant.
+scripts/agent-instructions.test.sh
+scripts/platform-network-floor-contract.test.sh
+scripts/platform-network-floor.test.sh
+scripts/platform-tenant-envelope-contract.test.sh
+scripts/platform-tenant-envelope.test.sh
+scripts/platform-vpa-floor-contract.test.sh
+scripts/platform-vpa-floor.test.sh
+scripts/pod-security-admission-contract.test.sh
+scripts/pod-security-admission.test.sh
+scripts/tenant-ci-contract.test.sh
+scripts/tenant-rbac-contract.test.sh
+scripts/tenant-rbac.test.sh
