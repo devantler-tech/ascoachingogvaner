@@ -20,10 +20,9 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: devantler-tech/actions/.github/workflows/template-sync.yaml@b089a1b041cb86af22cdc57de58a4d7d258dcc32 # v13.1.1
+    uses: devantler-tech/actions/.github/workflows/template-sync.yaml@4445e2b5f3d7c5130f04a9640654b71e6fadd1b5 # v13.1.2
     with:
       source-repo-path: devantler-tech/platform-tenant-template
-      # Workflow-file syncs require the configured App's workflows permission.
       use-app-token: true
     secrets:
       APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
