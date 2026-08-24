@@ -11,6 +11,7 @@ AGENTS.md
 Dockerfile
 README.md
 LICENSE
+.github/CODEOWNERS
 deploy/
 .templatesyncignore
 
@@ -23,6 +24,7 @@ scripts/rename-placeholders.test.sh
 # Template-only validation contracts depend on scaffold and Platform fixtures
 # that do not exist in a live tenant.
 scripts/agent-instructions.test.sh
+scripts/workflow-caller-contract.test.sh
 scripts/platform-network-floor-contract.test.sh
 scripts/platform-network-floor.test.sh
 scripts/platform-tenant-envelope-contract.test.sh
