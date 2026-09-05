@@ -21,6 +21,28 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    # `scripts/workflow-caller-pin-contract.test.sh` requires all three devantler-tech/actions
+    # callers (cd.yaml, release.yaml, template-sync.yaml) to ride ONE commit. Dependabot treats
+    # each reusable workflow as its own dependency, so UNGROUPED it opens one PR per caller —
+    # #219, #221 and #222 each touched exactly one file — and every one of those lands with the
+    # other two still behind, failing that assertion in required CI. No merge order rescues it:
+    # the first caller updated always disagrees with the rest. Grouping advances all three in a
+    # single PR, which is the only shape that can go green.
+    groups:
+      devantler-tech-actions:
+        patterns:
+          - "devantler-tech/*"
+      # A group applies to EITHER version updates or security updates, never both, and the key
+      # above defaults to `version-updates`, so this second group is what covers advisories at
+      # all. It is best-effort, NOT a guarantee: a security group combines only the dependencies
+      # that actually HAVE an advisory, so if one caller is affected and the others are not,
+      # Dependabot still opens a partial bump that fails the shared-commit assertion. Recovering
+      # from that is manual — open a separate PR moving all three callers to one reviewed SHA,
+      # superseding the partial one.
+      devantler-tech-actions-security:
+        applies-to: security-updates
+        patterns:
+          - "devantler-tech/*"
     cooldown:
       default-days: 7
       # devantler-tech actions/workflows are our own code — bump now, no cooldown.
