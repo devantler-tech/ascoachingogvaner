@@ -10,7 +10,7 @@
 - TailwindCSS v4
 - Vitest (unit) + Playwright (E2E, incl. `@axe-core/playwright` accessibility checks)
 - Served in production by nginx (see `Dockerfile` and `docker/nginx.conf.template`, rendered at build time from `src/lib/site-config.json` — the booking URL single source)
-- Node.js >= 22, npm (build-time only)
+- Node.js >= 22.19, npm (build-time only)
 
 **Browser support floor — Safari 13.1.** Visitors on macOS 10.13 High Sierra and 10.14 Mojave cannot update past Safari 13.1.2 / 14.1.2, so the built site must stay parseable by them. Two build steps enforce this and **neither is optional**:
 
