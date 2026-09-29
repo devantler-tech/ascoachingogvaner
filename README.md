@@ -30,7 +30,7 @@ Hele siden er én sammenhængende side; navigationen scroller til det relevante 
 
 ### Forudsætninger
 
-- Node.js ≥ 22
+- Node.js ≥ 26
 - npm
 
 ### Udvikling
