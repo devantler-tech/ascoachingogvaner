@@ -31,7 +31,7 @@ Hele siden er én sammenhængende side; navigationen scroller til det relevante 
 ### Forudsætninger
 
 - Node.js ≥ 26
-- npm
+- npm 11 (følger med Node.js 26; andre npm-hovedversioner afvises)
 
 ### Udvikling
 
