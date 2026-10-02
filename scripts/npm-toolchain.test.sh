@@ -14,10 +14,12 @@
 # CHECKS
 #   1. package.json declares devEngines.packageManager as npm "^<major>.0.0" with onFail "error".
 #   2. Every workflow job with a step that runs npm or npx has exactly one actions/setup-node step,
-#      with an explicit node-version on a Node line whose bundled npm is that major. The known jobs
-#      must all be found, so an empty discovery cannot pass.
+#      before its first npm or npx step and without an if: or continue-on-error, with an explicit
+#      node-version on a Node line whose bundled npm is that major. The known jobs must all be
+#      found, so an empty discovery cannot pass.
 #   3. Every node base image in the Dockerfile names such a Node line, and there is at least one.
-#   4. CI runs this test in a job whose result CI - Required Checks reports.
+#   4. CI runs this test, with no if: or continue-on-error on its job or step, in a job whose result
+#      CI - Required Checks reports.
 #
 # The real files must pass; then mutated copies prove each check rejects the drift it exists for,
 # each for its own reason.
@@ -57,16 +59,25 @@ required_jobs='ci.yaml:lint ci.yaml:check ci.yaml:test ci.yaml:e2e ci.yaml:build
 
 test_command='sh scripts/npm-toolchain.test.sh'
 
-# One row per job with a step that runs npm or npx: job id, setup-node step count, and the
-# node-version and node-version-file of the first setup-node step. "-" stands for an absent value,
-# because `read` collapses empty tab-separated fields.
-# shellcheck disable=SC2016 # $setup is a yq variable, not a shell expansion.
+# One row per job with a step that runs npm or npx: job id, setup-node step count, the
+# node-version and node-version-file of the first setup-node step, that step's index, the index of
+# the first npm or npx step, and whether the setup-node step may not take effect (an `if:` or a
+# continue-on-error). "-" stands for an absent value, because `read` collapses empty tab-separated
+# fields. $setup[0] is read only when $setup is non-empty: yq inserts an element when it indexes an
+# empty array, which would change the count.
+# shellcheck disable=SC2016 # $job, $npm, $setup, $count and $first are yq variables, not shell expansions.
 jobs_query='
   [.jobs // {} | to_entries | .[] |
-    select([.value.steps[]? | select((.run // "") | test("(^|[\\s;&|(])(npm|npx)(\\s|$)"))] | length > 0) |
-    [.value.steps[]? | select((.uses // "") | test("^actions/setup-node@"))] as $setup |
-    [.key, ($setup | length), ($setup[0].with."node-version" // "-"),
-     ($setup[0].with."node-version-file" // "-")]] | .[]
+    .key as $job |
+    [.value.steps // [] | to_entries | .[] |
+      select((.value.run // "") | test("(^|[\\s;&|(])(npm|npx)(\\s|$)")) | .key] as $npm |
+    select($npm | length > 0) |
+    [.value.steps // [] | to_entries | .[] | select((.value.uses // "") | test("^actions/setup-node@"))] as $setup |
+    ($setup | length) as $count |
+    (if $count > 0 then $setup[0] else {"key": "-", "value": {}} end) as $first |
+    [$job, $count, ($first.value.with."node-version" // "-"), ($first.value.with."node-version-file" // "-"),
+     $first.key, $npm[0],
+     (($first.value | has("if")) or (($first.value."continue-on-error" // false) != false))]] | .[]
 '
 
 # validate <package.json> <workflows dir> <Dockerfile>: exits non-zero on the first violation.
@@ -95,11 +106,17 @@ validate() {
 		[ -f "$workflow" ] || continue
 		base=$(basename -- "$workflow")
 		rows=$(yq -o=tsv "$jobs_query" "$workflow") || fail "cannot parse $base"
-		while IFS=$tab read -r job count node_version node_version_file; do
+		while IFS=$tab read -r job count node_version node_version_file setup_index npm_index setup_optional; do
 			[ -n "$job" ] || continue
 			found="$found$base:$job "
 			[ "$count" = 1 ] ||
 				fail "$base:$job runs npm but has $count actions/setup-node steps; it needs exactly one"
+			# A setup-node step after the first npm step, or one that may be skipped or fail
+			# silently, leaves npm on the runner's own Node installation.
+			[ "$setup_index" -lt "$npm_index" ] ||
+				fail "$base:$job runs npm in step $((npm_index + 1)), before its actions/setup-node step (step $((setup_index + 1)))"
+			[ "$setup_optional" = false ] ||
+				fail "$base:$job's actions/setup-node step sets if: or continue-on-error, so npm may run on the runner's own Node"
 			{ [ "$node_version_file" = - ] && [ "$node_version" != - ]; } ||
 				fail "$base:$job must pin node-version explicitly, so the npm major it installs with is reviewable"
 			line=$(printf '%s\n' "$node_version" | sed -n 's/^v\{0,1\}\([0-9][0-9]*\)\(\..*\)\{0,1\}$/\1/p')
@@ -130,6 +147,11 @@ EOF
 		*) continue ;;
 		esac
 		node_images=$((node_images + 1))
+		# Read the Node line from the tag. With a digest, Docker builds from the digest, which
+		# cannot be resolved offline; the build's own `npm ci` checks it instead. package.json is
+		# copied in before it, so npm 10.9 and later stop with EBADDEVENGINES on any other major,
+		# and earlier npm 10 releases reject the lockfile npm 11 writes. Container Smoke runs that
+		# build on every pull request.
 		tag=${image%%@*}
 		case $tag in
 		*:*) tag=${tag##*:} ;;
@@ -152,6 +174,25 @@ EOF
 	' "$ci") || fail 'cannot parse ci.yaml'
 	[ -n "$gate_job" ] ||
 		fail "ci.yaml has no job that runs '$test_command'"
+	# A condition can skip the test, and continue-on-error lets a failing test pass the job.
+	# shellcheck disable=SC2016 # $j and $s are yq variables, not shell expansions.
+	gate_flags=$(GATE_JOB=$gate_job TEST_COMMAND=$test_command yq -o=tsv '
+	  [.jobs | to_entries | .[] | select(.key == strenv(GATE_JOB)) | .value as $j |
+	    [$j.steps[] | select(.run == strenv(TEST_COMMAND))] as $s |
+	    [($j | has("if")), (($j."continue-on-error" // false) != false),
+	     ($s[0] | has("if")), (($s[0]."continue-on-error" // false) != false)]] | .[]
+	' "$ci") || fail 'cannot parse ci.yaml'
+	IFS=$tab read -r job_if job_continue step_if step_continue <<EOF
+$gate_flags
+EOF
+	[ "$job_if" = false ] ||
+		fail "ci.yaml job '$gate_job' sets if:, so the test may not run"
+	[ "$job_continue" = false ] ||
+		fail "ci.yaml job '$gate_job' sets continue-on-error, so a failing test may not fail the required check"
+	[ "$step_if" = false ] ||
+		fail "the ci.yaml step that runs '$test_command' sets if:, so the test may not run"
+	[ "$step_continue" = false ] ||
+		fail "the ci.yaml step that runs '$test_command' sets continue-on-error, so a failing test would not fail its job"
 	GATE_JOB=$gate_job yq -e '.jobs."ci-required-checks".needs | any_c(. == strenv(GATE_JOB))' "$ci" \
 		>/dev/null 2>&1 ||
 		fail "ci.yaml job '$gate_job' is not a dependency of CI - Required Checks, so its failure would not block a merge"
@@ -251,6 +292,19 @@ mutate_ci 'del(.jobs.e2e.steps[1])'
 expect_rejected 'a job that runs npm without setup-node' 'ci.yaml:e2e runs npm but has 0 actions/setup-node steps'
 
 reset_fixture
+mutate_ci '.jobs.lint.steps |= [.[0], .[2], .[1], .[3]]'
+expect_rejected 'setup-node after the first npm step' \
+	'ci.yaml:lint runs npm in step 2, before its actions/setup-node step (step 3)'
+
+reset_fixture
+mutate_ci '.jobs.test.steps[1].if = false'
+expect_rejected 'a setup-node step that may be skipped' "ci.yaml:test's actions/setup-node step sets if: or continue-on-error"
+
+reset_fixture
+mutate_ci '.jobs.build.steps[1]."continue-on-error" = true'
+expect_rejected 'a setup-node step whose failure is ignored' "ci.yaml:build's actions/setup-node step sets if: or continue-on-error"
+
+reset_fixture
 mutate_ci 'del(.jobs.lighthouse)'
 expect_rejected 'a known npm job no longer discovered' 'ci.yaml:lighthouse was not found as a job that runs npm'
 
@@ -293,6 +347,25 @@ reset_fixture
 mutate_ci '(.jobs."ci-required-checks".steps[] | select(.with."job-results" != null) | .with."job-results") |=
   sub("needs." + strenv(GATE_JOB) + ".result"; "needs." + strenv(GATE_JOB) + ".outcome")'
 expect_rejected 'its result no longer reported' "does not report the result of ci.yaml job '$GATE_JOB'"
+
+export TEST_COMMAND="$test_command"
+
+reset_fixture
+mutate_ci '.jobs[strenv(GATE_JOB)].if = false'
+expect_rejected 'the test job may be skipped' "ci.yaml job '$GATE_JOB' sets if:"
+
+reset_fixture
+mutate_ci '.jobs[strenv(GATE_JOB)]."continue-on-error" = true'
+expect_rejected 'the test job ignores a failure' "ci.yaml job '$GATE_JOB' sets continue-on-error"
+
+reset_fixture
+# shellcheck disable=SC2016 # ${{ false }} is a GitHub Actions expression, not a shell expansion.
+mutate_ci '(.jobs[strenv(GATE_JOB)].steps[] | select(.run == strenv(TEST_COMMAND)) | .if) = "${{ false }}"'
+expect_rejected 'the test step may be skipped' "the ci.yaml step that runs '$test_command' sets if:"
+
+reset_fixture
+mutate_ci '(.jobs[strenv(GATE_JOB)].steps[] | select(.run == strenv(TEST_COMMAND)) | ."continue-on-error") = true'
+expect_rejected 'the test step ignores a failure' "the ci.yaml step that runs '$test_command' sets continue-on-error"
 
 completed=1
 printf 'PASS: npm toolchain contract (happy path + %s fixture cases)\n' "$mutations_run"
