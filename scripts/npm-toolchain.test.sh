@@ -177,12 +177,14 @@ EOF
 	# A condition can skip the test, and continue-on-error lets a failing test pass the job.
 	# shellcheck disable=SC2016 # $j and $s are yq variables, not shell expansions.
 	gate_flags=$(GATE_JOB=$gate_job TEST_COMMAND=$test_command yq -o=tsv '
+	  . as $workflow |
 	  [.jobs | to_entries | .[] | select(.key == strenv(GATE_JOB)) | .value as $j |
 	    [$j.steps[] | select(.run == strenv(TEST_COMMAND))] as $s |
 	    [($j | has("if")), (($j."continue-on-error" // false) != false),
-	     ($s[0] | has("if")), (($s[0]."continue-on-error" // false) != false)]] | .[]
+	     ($s[0] | has("if")), (($s[0]."continue-on-error" // false) != false),
+	     ($workflow.defaults.run.shell // "-"), ($j.defaults.run.shell // "-"), ($s[0].shell // "-")]] | .[]
 	' "$ci") || fail 'cannot parse ci.yaml'
-	IFS=$tab read -r job_if job_continue step_if step_continue <<EOF
+	IFS=$tab read -r job_if job_continue step_if step_continue workflow_shell job_shell step_shell <<EOF
 $gate_flags
 EOF
 	[ "$job_if" = false ] ||
@@ -193,6 +195,12 @@ EOF
 		fail "the ci.yaml step that runs '$test_command' sets if:, so the test may not run"
 	[ "$step_continue" = false ] ||
 		fail "the ci.yaml step that runs '$test_command' sets continue-on-error, so a failing test would not fail its job"
+	[ "$workflow_shell" = - ] ||
+		fail "ci.yaml sets a workflow default shell ('$workflow_shell'), so '$test_command' may not execute with the runner's shell"
+	[ "$job_shell" = - ] ||
+		fail "ci.yaml job '$gate_job' sets a default shell ('$job_shell'), so '$test_command' may not execute with the runner's shell"
+	[ "$step_shell" = - ] ||
+		fail "the ci.yaml step that runs '$test_command' sets shell: '$step_shell', so the script may not execute"
 	GATE_JOB=$gate_job yq -e '.jobs."ci-required-checks".needs | any_c(. == strenv(GATE_JOB))' "$ci" \
 		>/dev/null 2>&1 ||
 		fail "ci.yaml job '$gate_job' is not a dependency of CI - Required Checks, so its failure would not block a merge"
@@ -200,6 +208,31 @@ EOF
 	  [.jobs."ci-required-checks".steps[]? | .with."job-results" // "" | select(test("needs\\." + strenv(GATE_JOB) + "\\.result"))] | length > 0
 	' "$ci" >/dev/null 2>&1 ||
 		fail "CI - Required Checks does not report the result of ci.yaml job '$gate_job'"
+
+	# The required summary must itself run and propagate the aggregate action's failure. Otherwise
+	# all guarded jobs can fail while GitHub records the required check as skipped or successful.
+	# shellcheck disable=SC2016 # $j, $steps and GitHub's ${{ always() }} are data for yq/the workflow.
+	aggregate_flags=$(yq -o=tsv '
+	  [.jobs."ci-required-checks" as $j |
+	    [$j.steps[]? | select(.with."job-results" != null)] as $steps |
+	    ($steps + [{}])[0] as $step |
+	    [($j.if // "-"), (($j."continue-on-error" // false) != false), ($steps | length),
+	     ($step | has("if")), (($step."continue-on-error" // false) != false)]] | .[]
+	' "$ci") || fail 'cannot parse ci.yaml'
+	IFS=$tab read -r aggregate_if aggregate_continue aggregate_count aggregate_step_if aggregate_step_continue <<EOF
+$aggregate_flags
+EOF
+	# shellcheck disable=SC2016 # GitHub evaluates this expression, not this shell.
+	[ "$aggregate_if" = '${{ always() }}' ] ||
+		fail 'CI - Required Checks must run with if: ${{ always() }} so failed or skipped dependencies cannot skip the summary'
+	[ "$aggregate_continue" = false ] ||
+		fail 'CI - Required Checks sets continue-on-error, so an aggregate failure would not block a merge'
+	[ "$aggregate_count" = 1 ] ||
+		fail "CI - Required Checks has $aggregate_count aggregate steps; it needs exactly one"
+	[ "$aggregate_step_if" = false ] ||
+		fail 'the CI - Required Checks aggregate step sets if:, so it may be skipped'
+	[ "$aggregate_step_continue" = false ] ||
+		fail 'the CI - Required Checks aggregate step sets continue-on-error, so its failure may be ignored'
 }
 
 validate "$repo_root/package.json" "$repo_root/.github/workflows" "$repo_root/Dockerfile"
@@ -366,6 +399,35 @@ expect_rejected 'the test step may be skipped' "the ci.yaml step that runs '$tes
 reset_fixture
 mutate_ci '(.jobs[strenv(GATE_JOB)].steps[] | select(.run == strenv(TEST_COMMAND)) | ."continue-on-error") = true'
 expect_rejected 'the test step ignores a failure' "the ci.yaml step that runs '$test_command' sets continue-on-error"
+
+reset_fixture
+mutate_ci '.jobs."ci-required-checks".if = false'
+# shellcheck disable=SC2016 # GitHub evaluates the expression in the expected diagnostic.
+expect_rejected 'the required summary job may be skipped' 'CI - Required Checks must run with if: ${{ always() }}'
+
+reset_fixture
+mutate_ci '.jobs."ci-required-checks"."continue-on-error" = true'
+expect_rejected 'the required summary job ignores a failure' 'CI - Required Checks sets continue-on-error'
+
+reset_fixture
+mutate_ci '(.jobs."ci-required-checks".steps[] | select(.with."job-results" != null) | .if) = false'
+expect_rejected 'the required summary step may be skipped' 'the CI - Required Checks aggregate step sets if:'
+
+reset_fixture
+mutate_ci '(.jobs."ci-required-checks".steps[] | select(.with."job-results" != null) | ."continue-on-error") = true'
+expect_rejected 'the required summary step ignores a failure' 'the CI - Required Checks aggregate step sets continue-on-error'
+
+reset_fixture
+mutate_ci '.defaults.run.shell = "echo {0}"'
+expect_rejected 'a workflow shell override prevents the test script from running' 'ci.yaml sets a workflow default shell'
+
+reset_fixture
+mutate_ci '.jobs[strenv(GATE_JOB)].defaults.run.shell = "echo {0}"'
+expect_rejected 'a job shell override prevents the test script from running' "ci.yaml job '$GATE_JOB' sets a default shell"
+
+reset_fixture
+mutate_ci '(.jobs[strenv(GATE_JOB)].steps[] | select(.run == strenv(TEST_COMMAND)) | .shell) = "echo {0}"'
+expect_rejected 'a step shell override prevents the test script from running' "the ci.yaml step that runs '$test_command' sets shell:"
 
 completed=1
 printf 'PASS: npm toolchain contract (happy path + %s fixture cases)\n' "$mutations_run"
