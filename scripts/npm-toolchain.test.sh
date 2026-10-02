@@ -63,8 +63,8 @@ test_command='sh scripts/npm-toolchain.test.sh'
 # node-version and node-version-file of the first setup-node step, that step's index, the index of
 # the first npm or npx step, and whether the setup-node step may not take effect (an `if:` or a
 # continue-on-error). "-" stands for an absent value, because `read` collapses empty tab-separated
-# fields. $setup[0] is read only when $setup is non-empty: yq inserts an element when it indexes an
-# empty array, which would change the count.
+# fields. $first comes from $setup plus a placeholder, never from $setup[0]: yq inserts an element
+# when it indexes an empty array, which would change the count. (The runner's yq has no if/then.)
 # shellcheck disable=SC2016 # $job, $npm, $setup, $count and $first are yq variables, not shell expansions.
 jobs_query='
   [.jobs // {} | to_entries | .[] |
@@ -74,7 +74,7 @@ jobs_query='
     select($npm | length > 0) |
     [.value.steps // [] | to_entries | .[] | select((.value.uses // "") | test("^actions/setup-node@"))] as $setup |
     ($setup | length) as $count |
-    (if $count > 0 then $setup[0] else {"key": "-", "value": {}} end) as $first |
+    ($setup + [{"key": "-", "value": {}}])[0] as $first |
     [$job, $count, ($first.value.with."node-version" // "-"), ($first.value.with."node-version-file" // "-"),
      $first.key, $npm[0],
      (($first.value | has("if")) or (($first.value."continue-on-error" // false) != false))]] | .[]
