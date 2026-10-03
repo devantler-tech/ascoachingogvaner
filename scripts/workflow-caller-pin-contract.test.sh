@@ -46,6 +46,10 @@ validate_pins() {
 		"$release_file" >/dev/null ||
 		fail 'the release caller must pin create-release.yaml to a commit SHA'
 	yq eval -e \
+		'.jobs.release.with."align-npm-with-consumer-contract" == true' \
+		"$release_file" >/dev/null ||
+		fail 'the release caller must explicitly align npm with the consumer contract'
+	yq eval -e \
 		'.jobs."template-sync".uses | test("^devantler-tech/actions/\\.github/workflows/template-sync\\.yaml@[0-9a-f]{40}$")' \
 		"$template_sync_file" >/dev/null ||
 		fail 'the template-sync caller must pin template-sync.yaml to a commit SHA'
@@ -132,6 +136,8 @@ assert_mutation_rejected 'publish caller SHA pin removed' cd \
 	'.jobs.publish.uses = "devantler-tech/actions/.github/workflows/publish-app.yaml@main"'
 assert_mutation_rejected 'release caller SHA pin removed' release \
 	'.jobs.release.uses = "devantler-tech/actions/.github/workflows/create-release.yaml@main"'
+assert_mutation_rejected 'release npm alignment disabled' release \
+	'.jobs.release.with."align-npm-with-consumer-contract" = false'
 assert_mutation_rejected 'template-sync caller SHA pin removed' template-sync \
 	'.jobs."template-sync".uses = "devantler-tech/actions/.github/workflows/template-sync.yaml@main"'
 assert_mutation_rejected 'one caller rolled back below the shared commit' cd \
