@@ -76,8 +76,9 @@ validate_pins() {
 		fail 'each devantler-tech/actions pin must carry a version comment of the form vX.Y.Z'
 
 	actions_floor_major=13
-	actions_floor_minor=1
-	actions_floor_patch=2
+	actions_floor_minor=10
+	actions_floor_patch=5
+	actions_floor=v${actions_floor_major}.${actions_floor_minor}.${actions_floor_patch}
 	pinned_major=$(printf '%s' "${cd_version#v}" | cut -d. -f1)
 	pinned_minor=$(printf '%s' "${cd_version#v}" | cut -d. -f2)
 	pinned_patch=$(printf '%s' "${cd_version#v}" | cut -d. -f3)
@@ -87,7 +88,7 @@ validate_pins() {
 		{ [ "$pinned_major" -eq "$actions_floor_major" ] &&
 			[ "$pinned_minor" -eq "$actions_floor_minor" ] &&
 			[ "$pinned_patch" -lt "$actions_floor_patch" ]; }; then
-		fail "devantler-tech/actions callers are pinned to $cd_version, older than the reviewed floor v13.1.2"
+		fail "devantler-tech/actions callers are pinned to $cd_version, older than the reviewed floor $actions_floor"
 	fi
 
 	# BIND THE VERSION COMMENT TO THE COMMIT. Everything above reads the comment, which is the one
@@ -206,18 +207,16 @@ assert_repin_rejected 'every caller rolled back below the reviewed floor' \
 	'older than the reviewed floor'
 
 current_ref=$(yq eval -r '.jobs.publish.uses | sub(".*@"; "")' "$cd_workflow")
-# The issue's own reproduction: v13.1.1's commit wearing a `# v13.1.3` annotation clears the floor
-# on the comment alone. Two patch releases below the reviewed floor, and every earlier check green.
+# The issue's own reproduction: v13.1.1's commit wearing the current floor annotation clears the
+# floor on the comment alone. The old commit and every earlier check are otherwise green.
 assert_repin_rejected 'a below-floor commit annotated with an above-floor version' \
-	b089a1b041cb86af22cdc57de58a4d7d258dcc32 v13.1.3 \
+	b089a1b041cb86af22cdc57de58a4d7d258dcc32 v13.10.5 \
 	'the comment must name the tag of the pinned commit'
-# The honest-mismatch direction: the right commit under a stale comment is still a pin whose
-# version claim is false, and a partially applied bump produces exactly this. The stale version
-# is ABOVE the floor on purpose — below it, the floor check would reject the mutant first and this
-# case would prove nothing about the binding.
-assert_repin_rejected 'the current commit annotated with a stale above-floor version' \
-	"$current_ref" v13.1.3 \
-	'the comment must name the tag of the pinned commit'
+# The honest stale-comment direction now fails at the raised floor before a tag lookup. A partially
+# applied bump must still be rejected even when its commit is current.
+assert_repin_rejected 'the current commit annotated with the previous release' \
+	"$current_ref" v13.10.4 \
+	'older than the reviewed floor'
 # A version that was never released resolves to nothing; an unverifiable claim fails closed. This
 # fires on the same branch a network outage would, which is why it runs after the happy path above
 # has already proved the forge was reachable in this run.
