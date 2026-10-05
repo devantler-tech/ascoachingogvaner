@@ -7,6 +7,11 @@ permissions:
   contents: read
 
 jobs:
+  validate-retired-links:
+    uses: ./.github/workflows/retired-links.yaml
+    permissions:
+      contents: read
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -195,7 +200,7 @@ jobs:
   ci-required-checks:
     name: CI - Required Checks
     runs-on: ubuntu-latest
-    needs: [lint, check, test, e2e, build, lighthouse, container-smoke, workflow-caller-pins, npm-toolchain, publish-pin-approved]
+    needs: [lint, check, test, e2e, build, lighthouse, container-smoke, workflow-caller-pins, npm-toolchain, publish-pin-approved, validate-retired-links]
     permissions: {}
     if: ${{ always() }}
     steps:
@@ -213,3 +218,4 @@ jobs:
             ${{ needs.workflow-caller-pins.result }}
             ${{ needs.npm-toolchain.result }}
             ${{ needs.publish-pin-approved.result }}
+            ${{ needs.validate-retired-links.result }}
