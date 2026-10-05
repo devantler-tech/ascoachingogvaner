@@ -86,4 +86,3 @@ jobs:
           set -euo pipefail
           go -C .catalogue-fixture/actions/validate-retired-repo-links build -mod=readonly -trimpath -o "$RUNNER_TEMP/retired-link-validator" .
           bash scripts/retired-repo-links.test.sh "$RUNNER_TEMP/retired-link-validator"
-
