@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { nav, site } from '$lib/content.js';
+	import { nav, site } from '#lib/content.js';
 	import Icon from './Icon.svelte';
 
 	let open = $state(false);

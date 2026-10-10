@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { nav, site } from '$lib/content.js';
+	import { nav, site } from '#lib/content.js';
 	import Icon from './Icon.svelte';
 
 	const year = new Date().getFullYear();

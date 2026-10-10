@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { services } from '$lib/content.js';
+	import { services } from '#lib/content.js';
 	import ServiceCard from './ServiceCard.svelte';
 
 	interface Props {

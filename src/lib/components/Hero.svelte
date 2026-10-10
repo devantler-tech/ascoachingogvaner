@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { trackEvent } from '$lib/analytics.js';
-	import { site } from '$lib/content.js';
+	import { trackEvent } from '#lib/analytics.js';
+	import { site } from '#lib/content.js';
 	import Icon from './Icon.svelte';
 </script>
 
@@ -50,7 +50,7 @@
 				     with a JPEG fallback at build time (see vite.config). fetchpriority high,
 				     never lazy-loaded; the 4/5 container fixes the box so there is no CLS. -->
 				<enhanced:img
-					src="$lib/assets/alette-hero.jpg?w=640;960;1440"
+					src="#lib/assets/alette-hero.jpg?w=640;960;1440"
 					sizes="(min-width: 1024px) 576px, 100vw"
 					alt="Alette, coach hos {site.name}"
 					fetchpriority="high"

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { trackEvent } from '$lib/analytics.js';
-	import { site } from '$lib/content.js';
-	import { buildContactMailto } from '$lib/mailto.js';
+	import { trackEvent } from '#lib/analytics.js';
+	import { site } from '#lib/content.js';
+	import { buildContactMailto } from '#lib/mailto.js';
 	import Icon from './Icon.svelte';
 
 	let opened = $state(false);
