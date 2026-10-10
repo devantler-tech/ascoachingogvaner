@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { site, type Service } from '$lib/content.js';
+	import { site, type Service } from '#lib/content.js';
 	import Icon from './Icon.svelte';
 
 	interface Props {

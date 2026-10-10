@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 // The Content-Security-Policy is a tested invariant (#97): every prerendered
-// page carries a CSP <meta> tag (svelte.config.js kit.csp) that must keep
+// page carries a CSP <meta> tag (vite.config.ts sveltekit({ csp })) that must keep
 // allowing exactly the site's one external origin (self-hosted Umami
 // analytics — fonts are self-hosted build assets since #98) while hashing
 // SvelteKit's inline hydration script. A directive typo would silently break

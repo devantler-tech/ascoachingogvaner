@@ -1,11 +1,11 @@
 <script lang="ts">
-	import Hero from '$lib/components/Hero.svelte';
-	import Section from '$lib/components/Section.svelte';
-	import Services from '$lib/components/Services.svelte';
-	import ContactForm from '$lib/components/ContactForm.svelte';
-	import Icon from '$lib/components/Icon.svelte';
-	import { about, contact, freeIntro, pricingNote, site } from '$lib/content.js';
-	import { structuredDataScript } from '$lib/structured-data.js';
+	import Hero from '#lib/components/Hero.svelte';
+	import Section from '#lib/components/Section.svelte';
+	import Services from '#lib/components/Services.svelte';
+	import ContactForm from '#lib/components/ContactForm.svelte';
+	import Icon from '#lib/components/Icon.svelte';
+	import { about, contact, freeIntro, pricingNote, site } from '#lib/content.js';
+	import { structuredDataScript } from '#lib/structured-data.js';
 
 	// "Ny" badge marks credentials earned this calendar year; it drops off
 	// automatically once the year rolls over (recomputed on the client).
