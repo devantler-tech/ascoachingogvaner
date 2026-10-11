@@ -154,6 +154,8 @@ jobs:
           persist-credentials: false
       - name: 📌 Validate reusable workflow caller pins
         run: sh scripts/workflow-caller-pin-contract.test.sh
+      - name: Validate Homepage site classification
+        run: sh scripts/homepage-group.test.sh
 
   # Dependabot writes package-lock.json with npm 11, and a lockfile one npm major writes fails the other
   # major's `npm ci`. package.json declares that major, and this keeps every job that runs npm, and the
