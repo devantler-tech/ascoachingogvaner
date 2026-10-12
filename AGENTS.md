@@ -23,7 +23,7 @@ Both failures are silent on a modern engine — no build error, no console warni
 
 - `src/routes/` — `(site)` is a single prerendered public page (hero plus `services`, `om-mig`, and a combined `kontakt` contact/booking section reached via in-page anchor links). `+layout.ts` sets `prerender = true` for the whole site; `+error.svelte` is the fallback page.
 - `src/lib/components/` — Svelte UI components (Hero, Nav, Services, ServiceCard, ContactForm, etc.).
-- `src/lib/` — shared modules: `content` (all copy, contact details and the booking URL) and `mailto` (builds the contact `mailto:` link).
+- `src/lib/` — shared modules: `content` (copy and public contact details), `site-config.json` (canonical booking URL, imported by content and the nginx renderer) and `mailto` (builds the contact `mailto:` link).
 - `static/` — static assets (logo/favicon `logo.png`, hero image).
 - `tests/unit/` (Vitest) and `tests/e2e/` (Playwright). **Accessibility is a tested invariant:** `tests/e2e/a11y.test.ts` runs axe-core (WCAG 2.1 A/AA) against the built site and fails the E2E gate on any critical/serious violation, so a future contrast/focus/landmark regression cannot ship silently. Keep it green — fix the markup at the root rather than relaxing the check; only allow-list a finding that is a deliberate, documented design choice.
 - `deploy/` — Kustomize manifests for the platform cluster (Deployment, Service, HTTPRoute). `Dockerfile` and `docker/nginx.conf.template` (rendered by `docker/render-nginx-conf.mjs`) build and serve the static output.
@@ -42,7 +42,7 @@ npm run test:e2e      # Playwright E2E (builds + previews the static site)
 npm run build         # Static prerender build (adapter-static -> build/)
 ```
 
-No database, secrets or environment variables are required: the site is fully static and all content (including public contact details and the external booking URL) lives in `src/lib/content.ts`. Never commit `.env` files.
+No database, secrets or environment variables are required: the site is fully static. Copy and public contact details live in `src/lib/content.ts`; the booking URL lives in `src/lib/site-config.json`, imported by content and the nginx renderer. Never commit `.env` files.
 
 The required documentation guard scans only README.md and AGENTS.md, with its scope declared in .github/retired-repo-links.json. Run `bash scripts/retired-repo-links.test.sh` locally to verify the scope and required CI registration. The native job uses the shipped validator and checks a clean scan, a seeded retired link, and missing configuration; it also runs on main after merge.
 
