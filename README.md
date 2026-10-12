@@ -1,60 +1,73 @@
 # AS - Coaching, vaner og ro
 
-Marketingside for **AS - Coaching, vaner og ro**: personlig coaching i stress, angst,
-vaner og overspisning. Besøgende kan læse om ydelserne, sende en besked og booke tid.
+En dansk, statisk hjemmeside for en coachingpraksis. Besøgende kan læse om forløbene,
+finde praktiske oplysninger og vælge kontakt eller booking. Navigationen går til afsnit
+på én sammenhængende side.
 
-Siden er fuldt statisk (ingen database eller backend). Booking foregår i et eksternt
-bookingsystem, og kontaktformularen åbner den besøgendes egen mailapp med en udfyldt besked.
+Kontaktformularen åbner den besøgendes egen mailapp med en udfyldt besked; hjemmesiden
+sender ikke mail. Booking foregår hos en ekstern udbyder. Der er ingen database, login
+eller backend, og en lokal forhåndsvisning opretter ikke en rigtig booking.
 
-Deployes som tenant på [devantler-tech/platform](https://github.com/devantler-tech/platform)
-via en OCI-pakket Kustomize-konfiguration (`deploy/`).
+## Kør siden lokalt
 
-## Features
+Brug Git, Bash, Node.js 26 og npm 11, som repositoryets CI anvender. Andre npm-hovedversioner
+afvises af `package.json`. Kør fra den mappe, hvor du vil have din kopi:
 
-Hele siden er én sammenhængende side; navigationen scroller til det relevante afsnit:
-
-- **Forside**: hero med de primære call-to-actions
-- **Services**: fire forløb (stress, angst, vaner, overspisning) med priser og rater
-- **Om mig**: coachens baggrund, personlige historie og uddannelse/certificeringer
-- **Kontakt & booking**: kontaktformular (åbner mailapp via `mailto`) plus "Book tid"-knapper, der linker til det eksterne bookingsystem
-
-## Tech stack
-
-- [SvelteKit](https://kit.svelte.dev) (Svelte 5) + TypeScript
-- [`@sveltejs/adapter-static`](https://svelte.dev/docs/kit/adapter-static): hele siden prerenderes til statisk HTML
-- [TailwindCSS v4](https://tailwindcss.com)
-- [Vitest](https://vitest.dev) (unit) + [Playwright](https://playwright.dev) (E2E)
-- Serveres i produktion af nginx (se `Dockerfile` og `docker/nginx.conf.template`, renderet ved build fra `src/lib/site-config.json`)
-
-## Kør lokalt
-
-### Forudsætninger
-
-- Node.js ≥ 26
-- npm 11 (følger med Node.js 26; andre npm-hovedversioner afvises)
-
-### Udvikling
-
-```bash
-npm install
-npm run dev
+```sh
+git clone https://github.com/devantler-tech/ascoachingogvaner.git
+cd ascoachingogvaner
+npm ci
+npm run dev -- --host 127.0.0.1
 ```
 
-Åbn [http://localhost:5173](http://localhost:5173). Ingen database eller miljøvariabler er nødvendige.
+Åbn den lokale adresse, Vite viser, normalt `http://127.0.0.1:5173/`. Du skal kunne se
+forsiden og navigere til Services, Om mig og Kontakt. Ingen miljøvariabler, database
+eller platformadgang er nødvendige. Stop serveren med Ctrl+C. Afprøv ikke kontakt
+eller booking med rigtige personoplysninger, når du blot tester en ændring.
 
-## Scripts
+Fra repositoryets rod kan du også bygge og se det statiske resultat:
 
-| Script | Beskrivelse |
-|--------|-------------|
-| `npm run dev` | Udviklingsserver |
-| `npm run build` | Statisk produktionsbuild (prerender til `build/`) |
-| `npm run preview` | Forhåndsvis det byggede statiske site |
-| `npm run check` | Svelte/TypeScript-typecheck |
-| `npm run lint` | ESLint |
-| `npm test` | Unit-tests (Vitest) |
-| `npm run test:e2e` | E2E-tests (Playwright) |
+```sh
+npm run build
+npm run preview -- --host 127.0.0.1
+```
 
-## Miljøvariabler
+Et vellykket build lægger HTML og assets i `build/`. Åbn den viste preview-adresse, og
+stop med Ctrl+C. Redigér ikke det genererede output. Lokal preview er ikke bevis for,
+at en ny version er udgivet eller kører i produktion.
 
-Ingen. Siden er statisk, og alt indhold (inkl. kontaktoplysninger og bookinglink) ligger i
-`src/lib/content.ts`.
+## Find den rigtige kilde
+
+- `src/lib/content.ts` ejer sidens danske tekster, offentlige kontaktoplysninger og priser.
+- `src/lib/site-config.json` ejer bookingadressen. Den importeres af indholdet og bruges
+  til at generere nginx-konfigurationen; ret ikke en separat kopi af bookinglinket.
+- `src/lib/components/` og `src/routes/` ejer præsentation og navigation.
+- `static/` indeholder statiske assets; `tests/unit/` og `tests/e2e/` indeholder tests.
+
+Siden er bygget med SvelteKit/Svelte, TypeScript og TailwindCSS og prerenderes med
+`@sveltejs/adapter-static`. Produktion bruger nginx; konfigurationen findes i
+`Dockerfile` og `docker/`. Deploy-konfigurationen i `deploy/` er operatørarbejde,
+ikke en forudsætning for at starte lokalt.
+
+## Bidrag og kvalitet
+
+Start i [CONTRIBUTING.md](CONTRIBUTING.md) for en lille ændring, de nødvendige værktøjer,
+lokale checks og krav til en PR. [AGENTS.md](AGENTS.md) er repositoryets kanoniske kontrakt.
+
+Tilgængelighed og understøttelse af Safari 13.1 er eksisterende krav. Buildet tilpasser
+både CSS-lag og JavaScript, og browsertests kontrollerer dem; et moderne browser-preview
+alene beviser ikke kompatibilitet. De krav må ikke fjernes for at få et check til at bestå.
+
+Release/CD-workflows og platformens reconciliation ejer udgivelse. Et merge er ikke et
+bevis for live deployment, og almindelige bidrag kræver ikke udgivelsesrettigheder.
+
+## Sikkerhed og genbrug
+
+Følg organisationens [adfærdskodeks](https://github.com/devantler-tech/.github/blob/main/.github/CODE_OF_CONDUCT.md)
+og [sikkerhedspolitik](https://github.com/devantler-tech/.github/blob/main/.github/SECURITY.md).
+Brug en privat rapporteringsvej til sårbarheder; hvis den mangler, bed om en privat kanal
+uden at offentliggøre de følsomme oplysninger. Del ikke kundehenvendelser, persondata
+eller credentials i issues, PRs eller eksempler.
+
+Repositoryet har ingen licens, der giver fri genbrug af applikationens kildekode, tekster
+eller billeder. Offentlig kildekode og dependency-licenser giver ikke i sig selv den tilladelse.
