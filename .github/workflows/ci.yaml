@@ -128,9 +128,16 @@ jobs:
           expected=$(node -p "require('./src/lib/site-config.json').bookingUrl")
           code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/book-tid)
           location=$(curl -sI http://localhost:8080/book-tid | tr -d '\r' | awk 'tolower($1)=="location:" {print $2}')
+          page_headers=$(curl -sI http://localhost:8080/ | tr -d '\r')
           docker stop asc-smoke
           if [ "$code" != "301" ] || [ "$location" != "$expected" ]; then
             echo "::error::expected 301 -> $expected, got $code -> $location"
+            exit 1
+          fi
+          # Pages revalidate on every visit and keep the security headers.
+          if ! printf '%s\n' "$page_headers" | grep -qix 'cache-control: no-cache' ||
+            ! printf '%s\n' "$page_headers" | grep -qix 'x-content-type-options: nosniff'; then
+            echo "::error::the homepage must send Cache-Control: no-cache and the security headers"
             exit 1
           fi
 

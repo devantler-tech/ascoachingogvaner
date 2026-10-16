@@ -30,9 +30,13 @@ server {
     }
 
     # Unknown paths get a real 404 status (not 200) while still showing the
-    # branded fallback page.
+    # branded fallback page. Pages revalidate on every visit (a cheap 304 via
+    # the ETag): without this a browser may reuse an old page after a deploy,
+    # and that page names hashed assets the new image no longer contains.
     error_page 404 /404.html;
     location / {
         try_files $uri $uri/ =404;
+        add_header Cache-Control "no-cache";
+        include /etc/nginx/snippets/security-headers.conf;
     }
 }
