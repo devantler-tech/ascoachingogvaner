@@ -84,3 +84,27 @@ describe('booking URL single source', () => {
 		},
 	);
 });
+
+describe('page caching', () => {
+	// Pages must revalidate on every visit: a heuristically cached page from
+	// before a deploy names hashed /_app/immutable assets the new image no longer
+	// contains. Declaring add_header in a location drops the server-level
+	// security headers, so the same block must include the snippet again.
+	function pageLocation(conf: string): string {
+		const block = /location \/ \{([^}]*)\}/.exec(conf);
+		if (!block) throw new Error('the catch-all page location must exist');
+		return block[1];
+	}
+
+	it('revalidates pages instead of letting browsers reuse them heuristically', () => {
+		expect(pageLocation(renderConf())).toMatch(/add_header Cache-Control "no-cache";/);
+	});
+
+	it('keeps the security headers on pages', () => {
+		expect(pageLocation(renderConf())).toContain('include /etc/nginx/snippets/security-headers.conf;');
+	});
+
+	it('still caches hashed build assets as immutable', () => {
+		expect(renderConf()).toMatch(/location \/_app\/immutable\/ \{[^}]*add_header Cache-Control "public, immutable";/);
+	});
+});
