@@ -96,9 +96,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      # Budgets live in lighthouserc.json at error level (issue #99): a budget
-      # miss fails this job, and through ci-required-checks the PR, so a
-      # Core Web Vitals regression cannot merge unnoticed.
+      # Budgets live in lighthouserc.json at error level (issue #99): missing any
+      # configured budget (performance score, LCP, CLS, TBT, FCP) fails this job
+      # and, through ci-required-checks, blocks the pull request.
       - run: npm run test:perf
 
   container-smoke:

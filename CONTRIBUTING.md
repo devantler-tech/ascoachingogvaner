@@ -85,7 +85,7 @@ Ved en ikke-standard sti bruges Lighthouse CI's dokumenterede
 [`collect.chromePath`](https://github.com/GoogleChrome/lighthouse-ci/blob/main/docs/configuration.md#chromepath)
 uden at ændre repositoryets budgets. Rapporterne skrives lokalt i `.lighthouseci/`.
 Budgetoverskridelser får Lighthouse-jobbet til at fejle, og jobbet
-indgår i `CI - Required Checks`, så en forringelse af Core Web Vitals blokerer en pull request.
+indgår i `CI - Required Checks`, så en overskridelse af de konfigurerede Lighthouse-budgetter blokerer en pull request.
 Det er altså ikke en valgfri lane som i andre apps.
 
 Kør også de lokale wiring-fixtures:
