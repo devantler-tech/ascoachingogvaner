@@ -96,10 +96,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      # Budgets live in lighthouserc.json and are warn-level while calibrating
-      # (issue #99): a budget miss prints the report but exits 0, so this job
-      # only fails on infrastructure errors. Flip the assertions to "error"
-      # to enforce once the numbers prove stable across releases.
+      # Budgets live in lighthouserc.json at error level (issue #99): a budget
+      # miss fails this job, and through ci-required-checks the PR, so a
+      # Core Web Vitals regression cannot merge unnoticed.
       - run: npm run test:perf
 
   container-smoke:
