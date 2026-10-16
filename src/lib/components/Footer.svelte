@@ -10,7 +10,7 @@
 	<div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:grid-cols-2 lg:grid-cols-3">
 		<div>
 			<div class="flex items-center gap-2 text-forest-900">
-				<img src="/logo.png" alt="" class="h-10 w-10 rounded-full object-cover" />
+				<enhanced:img src="#lib/assets/logo.png?w=40;80;120" sizes="40px" alt="" class="h-10 w-10 rounded-full object-cover" />
 				<span class="font-serif text-lg">{site.name}</span>
 			</div>
 			<p class="mt-4 max-w-xs text-sm text-muted">{site.tagline}. {site.intro}</p>

@@ -84,8 +84,9 @@ browser-opslag kan finde; Playwrights download er ikke automatisk samme forudsæ
 Ved en ikke-standard sti bruges Lighthouse CI's dokumenterede
 [`collect.chromePath`](https://github.com/GoogleChrome/lighthouse-ci/blob/main/docs/configuration.md#chromepath)
 uden at ændre repositoryets budgets. Rapporterne skrives lokalt i `.lighthouseci/`.
-Budgetoverskridelser er aktuelt advarsler, men infrastrukturen skal fungere: Lighthouse-jobbet
-indgår i `CI - Required Checks`. Det er altså ikke en valgfri lane som i andre apps.
+Budgetoverskridelser får Lighthouse-jobbet til at fejle, og jobbet
+indgår i `CI - Required Checks`, så en overskridelse af de konfigurerede Lighthouse-budgetter blokerer en pull request.
+Det er altså ikke en valgfri lane som i andre apps.
 
 Kør også de lokale wiring-fixtures:
 

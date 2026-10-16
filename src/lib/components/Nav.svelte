@@ -40,7 +40,7 @@
 <header class="sticky top-0 z-40 border-b border-sage-100 bg-canvas/85 backdrop-blur">
 	<nav class="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
 		<a href="#top" class="flex items-center gap-2 text-forest-900" onclick={() => (open = false)}>
-			<img src="/logo.png" alt="" class="h-10 w-10 rounded-full object-cover" />
+			<enhanced:img src="#lib/assets/logo.png?w=40;80;120" sizes="40px" alt="" class="h-10 w-10 rounded-full object-cover" />
 			<span class="font-serif text-lg leading-tight">{site.name}</span>
 		</a>
 
