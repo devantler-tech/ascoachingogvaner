@@ -5,6 +5,46 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    # Every package is a devDependency (the site is fully static), so updates arrive as
+    # `build(deps-dev)`, which releases nothing on its own. `.releaserc` cuts a patch release for a
+    # `build(deps-dev)` commit only when its title names the `site-bundle` group below, so updates to
+    # the packages that end up in what visitors receive reach the live site, and tooling updates do
+    # not cut a release.
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    groups:
+      # The packages whose code ends up in the built site. Exact names only: a new package that ships
+      # must be added here on purpose, and `scripts/release-classification.test.sh` fails until every
+      # package in package.json is classified as shipped (here) or tooling (in that test).
+      site-bundle:
+        patterns:
+          - "@fontsource-variable/inter"
+          - "@fontsource-variable/lora"
+          - "@sveltejs/adapter-static"
+          - "@sveltejs/enhanced-img"
+          - "@sveltejs/kit"
+          - "@sveltejs/vite-plugin-svelte"
+          - "@tailwindcss/vite"
+          - "svelte"
+          - "tailwindcss"
+          - "vite"
+      # A group applies to version updates or security updates, never both, so this second group
+      # carries the same packages for security updates. `.releaserc` matches both names, and the
+      # test keeps the two lists identical.
+      site-bundle-security:
+        applies-to: security-updates
+        patterns:
+          - "@fontsource-variable/inter"
+          - "@fontsource-variable/lora"
+          - "@sveltejs/adapter-static"
+          - "@sveltejs/enhanced-img"
+          - "@sveltejs/kit"
+          - "@sveltejs/vite-plugin-svelte"
+          - "@tailwindcss/vite"
+          - "svelte"
+          - "tailwindcss"
+          - "vite"
     cooldown:
       default-days: 7
 
@@ -13,6 +53,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    # The base images are what the site is built with and served from, so their updates release:
+    # `.releaserc` cuts a patch release for `build(deps)` commits.
+    commit-message:
+      prefix: "build"
+      include: "scope"
     cooldown:
       default-days: 7
 
@@ -21,6 +66,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    # Workflow updates change nothing the site serves, so they use the `ci` prefix and release
+    # nothing.
+    commit-message:
+      prefix: "ci"
+      include: "scope"
     # `scripts/workflow-caller-pin-contract.test.sh` requires all three devantler-tech/actions
     # callers (cd.yaml, release.yaml, template-sync.yaml) to ride ONE commit. Dependabot treats
     # each reusable workflow as its own dependency, so UNGROUPED it opens one PR per caller —
