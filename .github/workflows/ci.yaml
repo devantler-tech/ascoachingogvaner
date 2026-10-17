@@ -179,6 +179,22 @@ jobs:
       - name: 📦 Validate the npm major every install uses
         run: sh scripts/npm-toolchain.test.sh
 
+  # A release, and so a deploy, is cut only for the commits .releaserc names. This keeps every package
+  # classified as shipped (its updates release) or tooling (they do not), so a package that ends up in
+  # the built site cannot have its updates stop short of the live site. No npm install: the script is
+  # `sh` + `yq` + `jq`, all present on the runner.
+  release-classification:
+    name: Release Classification
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: 🏷️ Validate which dependency updates release
+        run: sh scripts/release-classification.test.sh
+
   # The platform deploys a release only when its publish-app.yaml revision is approved for this tenant.
   # A PR that moves the pin to an unapproved revision would ship a release the platform refuses, so the
   # template's check compares the base and head pins and fails the move here instead. An unchanged pin
@@ -208,7 +224,7 @@ jobs:
   ci-required-checks:
     name: CI - Required Checks
     runs-on: ubuntu-latest
-    needs: [lint, check, test, e2e, build, lighthouse, container-smoke, workflow-caller-pins, npm-toolchain, publish-pin-approved, validate-retired-links]
+    needs: [lint, check, test, e2e, build, lighthouse, container-smoke, workflow-caller-pins, npm-toolchain, release-classification, publish-pin-approved, validate-retired-links]
     permissions: {}
     if: ${{ always() }}
     steps:
@@ -225,5 +241,6 @@ jobs:
             ${{ needs.container-smoke.result }}
             ${{ needs.workflow-caller-pins.result }}
             ${{ needs.npm-toolchain.result }}
+            ${{ needs.release-classification.result }}
             ${{ needs.publish-pin-approved.result }}
             ${{ needs.validate-retired-links.result }}
