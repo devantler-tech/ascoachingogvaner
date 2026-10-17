@@ -1,12 +1,4 @@
-import { readFileSync } from 'node:fs';
-
 import { test, expect } from '@playwright/test';
-
-// Read (not import) the JSON: this package is ESM, where a bare JSON import
-// needs `with { type: 'json' }` that not every loader in the toolchain accepts.
-const siteConfig = JSON.parse(
-	readFileSync(new URL('../../src/lib/site-config.json', import.meta.url), 'utf8')
-);
 
 test('homepage shows hero and primary CTA', async ({ page }) => {
 	await page.goto('/');
@@ -29,13 +21,38 @@ test('nav links scroll to the matching sections on one page', async ({ page }) =
 	}
 });
 
-test('Book tid links out to the external booking system', async ({ page }) => {
+test('booking buttons lead to the contact section (#318)', async ({ page }) => {
 	await page.goto('/');
-	const bookCta = page.getByRole('navigation').getByRole('link', { name: /book tid/i }).first();
-	// Same single source the site code and the nginx render consume, so a
-	// booking-vendor move stays a one-file edit (issue #100).
-	await expect(bookCta).toHaveAttribute('href', siteConfig.bookingUrl);
-	await expect(bookCta).toHaveAttribute('target', '_blank');
+
+	// Nav and footer "Book tid", the hero button and one button per service:
+	// all stay on the page and scroll to the contact form and email address.
+	const bookLinks = page.getByRole('link', { name: /^book /i }).filter({ hasNotText: /via mail/i });
+	await expect(bookLinks).toHaveCount(7);
+	for (const link of await bookLinks.all()) {
+		await expect(link).toHaveAttribute('href', '#kontakt');
+		await expect(link).not.toHaveAttribute('target', /.*/);
+	}
+
+	await page.getByRole('navigation').getByRole('link', { name: /book tid/i }).first().click();
+	await expect(page.getByRole('heading', { name: /dit liv/i }).first()).toBeInViewport();
+});
+
+test('the free intro can be booked by email (#318)', async ({ page }) => {
+	await page.goto('/');
+	const mailLink = page.getByRole('link', { name: /book via mail/i });
+	await expect(mailLink).toHaveAttribute('href', /^mailto:[^?]+@[^?]+\?subject=Gratis%20startsamtale$/);
+});
+
+test('no link leaves the site except the map (#318)', async ({ page }) => {
+	await page.goto('/');
+	const hrefs = await page
+		.locator('a[href^="http"]')
+		.evaluateAll((links) => links.map((link) => (link as HTMLAnchorElement).href));
+	const external = hrefs.filter((href) => new URL(href).origin !== new URL(page.url()).origin);
+	expect(external.length).toBeGreaterThan(0);
+	for (const href of external) {
+		expect(new URL(href).host).toBe('www.google.com');
+	}
 });
 
 test('services section lists all four offerings with prices', async ({ page }) => {

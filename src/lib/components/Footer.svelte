@@ -3,7 +3,6 @@
 	import Icon from './Icon.svelte';
 
 	const year = new Date().getFullYear();
-	const isExternal = (href: string): boolean => /^https?:\/\//.test(href);
 </script>
 
 <footer class="mt-24 border-t border-sage-100 bg-sage-50">
@@ -19,12 +18,10 @@
 		<div>
 			<h2 class="text-sm font-semibold tracking-wide text-forest-900 uppercase">Sider</h2>
 			<ul class="mt-4 space-y-2 text-sm">
-				{#each nav as link (link.href)}
+				{#each nav as link (link.label)}
 					<li>
 						<a
 							href={link.href}
-							target={isExternal(link.href) ? '_blank' : undefined}
-							rel={isExternal(link.href) ? 'noopener noreferrer' : undefined}
 							class="text-muted transition-colors hover:text-forest-700">{link.label}</a
 						>
 					</li>

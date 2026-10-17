@@ -2,14 +2,14 @@
 
 ## Project overview
 
-`ascoachingogvaner` is a fully static SvelteKit + TypeScript marketing site for a personal coaching practice (Danish-language content). Visitors read about the services, send a message (which opens their own mail app via a `mailto:` link), and book sessions through an external booking system. There is no database, admin area or server-side code: the whole site is prerendered to static HTML (`@sveltejs/adapter-static`) and served by nginx. It is deployed as a tenant on the devantler-tech platform Kubernetes cluster via an OCI-packaged Kustomize config.
+`ascoachingogvaner` is a fully static SvelteKit + TypeScript marketing site for a personal coaching practice (Danish-language content). Visitors read about the services and book sessions by email or through the contact form (which opens their own mail app via a `mailto:` link). There is no database, admin area or server-side code: the whole site is prerendered to static HTML (`@sveltejs/adapter-static`) and served by nginx. It is deployed as a tenant on the devantler-tech platform Kubernetes cluster via an OCI-packaged Kustomize config.
 
 ## Stack
 
 - SvelteKit (Svelte 5) + TypeScript, `@sveltejs/adapter-static` (fully prerendered, no server runtime)
 - TailwindCSS v4
 - Vitest (unit) + Playwright (E2E, incl. `@axe-core/playwright` accessibility checks)
-- Served in production by nginx (see `Dockerfile` and `docker/nginx.conf.template`, rendered at build time from `src/lib/site-config.json` — the booking URL single source)
+- Served in production by nginx (see `Dockerfile` and `docker/nginx.conf`, copied into the image as is)
 - Node.js >= 26 with npm 11 (build-time only). Dependabot writes `package-lock.json` with npm 11, and another npm major disagrees about which optional peer entries it must hold, so `npm ci` rejects it. `package.json` declares the major in `devEngines.packageManager` (npm stops with `EBADDEVENGINES` on any other one), and `scripts/npm-toolchain.test.sh` keeps every CI job that runs npm, and the Docker base image, on a Node line that bundles it. Regenerate the lockfile only with npm 11.
 
 **Browser support floor — Safari 13.1.** Visitors on macOS 10.13 High Sierra and 10.14 Mojave cannot update past Safari 13.1.2 / 14.1.2, so the built site must stay parseable by them. Two build steps enforce this and **neither is optional**:
@@ -21,12 +21,12 @@ Both failures are silent on a modern engine — no build error, no console warni
 
 ## Structure
 
-- `src/routes/` — `(site)` is a single prerendered public page (hero plus `services`, `om-mig`, and a combined `kontakt` contact/booking section reached via in-page anchor links). `+layout.ts` sets `prerender = true` for the whole site; `+error.svelte` is the fallback page.
+- `src/routes/` — `(site)` is a single prerendered public page (hero plus `services`, `om-mig`, and a combined `kontakt` contact/booking section reached via in-page anchor links; every booking button leads to it). `+layout.ts` sets `prerender = true` for the whole site; `+error.svelte` is the fallback page.
 - `src/lib/components/` — Svelte UI components (Hero, Nav, Services, ServiceCard, ContactForm, etc.).
-- `src/lib/` — shared modules: `content` (copy and public contact details), `site-config.json` (canonical booking URL, imported by content and the nginx renderer) and `mailto` (builds the contact `mailto:` link).
+- `src/lib/` — shared modules: `content` (copy, public contact details and `bookingHref`, the contact-section anchor every booking button uses) and `mailto` (builds the contact `mailto:` link).
 - `static/` — files served as-is: `favicon.png`, `logo.png` (touch icon and structured data) and `og-image.jpg`. Images shown on the page live in `src/lib/assets/` and are resized to AVIF/WebP at build time by `enhanced:img`. The logo exists twice (`static/logo.png` and `src/lib/assets/logo.png`): when it changes, replace both and regenerate the 64 px `favicon.png` from it.
 - `tests/unit/` (Vitest) and `tests/e2e/` (Playwright). **Accessibility is a tested invariant:** `tests/e2e/a11y.test.ts` runs axe-core (WCAG 2.1 A/AA) against the built site and fails the E2E gate on any critical/serious violation, so a future contrast/focus/landmark regression cannot ship silently. Keep it green — fix the markup at the root rather than relaxing the check; only allow-list a finding that is a deliberate, documented design choice.
-- `deploy/` — Kustomize manifests for the platform cluster (Deployment, Service, HTTPRoute). `Dockerfile` and `docker/nginx.conf.template` (rendered by `docker/render-nginx-conf.mjs`) build and serve the static output.
+- `deploy/` — Kustomize manifests for the platform cluster (Deployment, Service, HTTPRoute). `Dockerfile` and `docker/nginx.conf` build and serve the static output.
 - CI/CD: `.github/workflows/` — `ci.yaml` (PR gate), `release.yaml` (semantic-release on `main`), `cd.yaml` (publish OCI artifact on tags).
 
 ## Validation
@@ -42,7 +42,7 @@ npm run test:e2e      # Playwright E2E (builds + previews the static site)
 npm run build         # Static prerender build (adapter-static -> build/)
 ```
 
-No database, secrets or environment variables are required: the site is fully static. Copy and public contact details live in `src/lib/content.ts`; the booking URL lives in `src/lib/site-config.json`, imported by content and the nginx renderer. Never commit `.env` files.
+No database, secrets or environment variables are required: the site is fully static. Copy and public contact details live in `src/lib/content.ts`. Never commit `.env` files.
 
 The required documentation guard scans only README.md and AGENTS.md, with its scope declared in .github/retired-repo-links.json. Run `bash scripts/retired-repo-links.test.sh` locally to verify the scope and required CI registration. The native job uses the shipped validator and checks a clean scan, a seeded retired link, and missing configuration; it also runs on main after merge.
 
