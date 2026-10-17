@@ -5,7 +5,10 @@
 // contents, email, phone or any other PII, so the lead funnel stays measurable
 // while remaining privacy-first.
 
-export type UmamiEvent = 'contact-submit' | 'book-intro-click';
+// The two ways a visitor starts a booking: sending the contact form, and the
+// "Book via mail" link in the contact section. The other booking buttons only
+// scroll to that section, so they are not tracked.
+export type UmamiEvent = 'contact-submit' | 'book-mail-click';
 
 interface Umami {
 	track: (event: string) => void;

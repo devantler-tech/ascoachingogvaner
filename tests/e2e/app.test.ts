@@ -1,4 +1,28 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+// Every link must stay on the site, start an email or a call, or open the map.
+// This is an allow-list over every `a[href]`, so a link that leaves the site in
+// any spelling (protocol-relative, an upper-case scheme, `javascript:`) is
+// reported instead of skipped.
+async function linksLeavingTheSite(page: Page): Promise<{ examined: number; leaving: string[] }> {
+	return page.locator('a[href]').evaluateAll((links) => {
+		const stays = (link: HTMLAnchorElement): boolean => {
+			if ((link.getAttribute('href') ?? '').startsWith('#')) return true;
+			// `link.href` is the resolved URL, so the scheme is already lower-case.
+			const url = new URL(link.href);
+			if (url.protocol === 'mailto:' || url.protocol === 'tel:') return true;
+			if (url.origin === location.origin) return true;
+			return (
+				url.protocol === 'https:' && url.host === 'www.google.com' && url.pathname.startsWith('/maps/')
+			);
+		};
+		const anchors = links as HTMLAnchorElement[];
+		return {
+			examined: anchors.length,
+			leaving: anchors.filter((link) => !stays(link)).map((link) => link.getAttribute('href') ?? '')
+		};
+	});
+}
 
 test('homepage shows hero and primary CTA', async ({ page }) => {
 	await page.goto('/');
@@ -43,16 +67,51 @@ test('the free intro can be booked by email (#318)', async ({ page }) => {
 	await expect(mailLink).toHaveAttribute('href', /^mailto:[^?]+@[^?]+\?subject=Gratis%20startsamtale$/);
 });
 
+test('the "Book via mail" link is the tracked booking click (#318)', async ({ page }) => {
+	// Stand in for the Umami tracker so the test records what the page sends.
+	await page.route('https://analytics.platform.devantler.tech/**', (route) => route.abort());
+	await page.addInitScript(() => {
+		const sent: string[] = [];
+		Object.assign(window, { umamiSent: sent, umami: { track: (event: string) => sent.push(event) } });
+	});
+	await page.goto('/');
+	const sent = () => page.evaluate(() => (window as unknown as { umamiSent: string[] }).umamiSent);
+
+	// The hero button only scrolls to the contact section, so it sends nothing.
+	await page.locator('#top').getByRole('link', { name: /gratis startsamtale/i }).click();
+	await expect(page.getByRole('heading', { name: /dit liv/i }).first()).toBeInViewport();
+	expect(await sent()).toEqual([]);
+
+	await page.getByRole('link', { name: /book via mail/i }).click();
+	await expect.poll(sent).toEqual(['book-mail-click']);
+});
+
 test('no link leaves the site except the map (#318)', async ({ page }) => {
 	await page.goto('/');
-	const hrefs = await page
-		.locator('a[href^="http"]')
-		.evaluateAll((links) => links.map((link) => (link as HTMLAnchorElement).href));
-	const external = hrefs.filter((href) => new URL(href).origin !== new URL(page.url()).origin);
-	expect(external.length).toBeGreaterThan(0);
-	for (const href of external) {
-		expect(new URL(href).host).toBe('www.google.com');
-	}
+	await expect(page.locator('a[href^="https://www.google.com/maps/"]').first()).toBeAttached();
+	const { examined, leaving } = await linksLeavingTheSite(page);
+	expect(examined).toBeGreaterThan(10);
+	expect(leaving).toEqual([]);
+});
+
+test('the link check reports every spelling of a link that leaves the site (#318)', async ({ page }) => {
+	await page.goto('/');
+	const leaving = [
+		'//booking.example/book',
+		'HTTPS://booking.example/book',
+		'http://www.google.com/maps/search/',
+		'https://www.google.com/booking',
+		'javascript:void(0)'
+	];
+	const staying = ['#kontakt', 'MAILTO:x@example.dk', 'tel:+4512345678', '/om-mig'];
+	await page.evaluate((hrefs) => {
+		for (const href of hrefs) {
+			const link = document.createElement('a');
+			link.setAttribute('href', href);
+			document.body.append(link);
+		}
+	}, [...leaving, ...staying]);
+	expect((await linksLeavingTheSite(page)).leaving).toEqual(leaving);
 });
 
 test('services section lists all four offerings with prices', async ({ page }) => {

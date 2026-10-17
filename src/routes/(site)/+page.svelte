@@ -4,7 +4,9 @@
 	import Services from '#lib/components/Services.svelte';
 	import ContactForm from '#lib/components/ContactForm.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import { trackEvent } from '#lib/analytics.js';
 	import { about, contact, freeIntro, pricingNote, site } from '#lib/content.js';
+	import { buildBookingMailto } from '#lib/mailto.js';
 	import { structuredDataScript } from '#lib/structured-data.js';
 
 	// "Ny" badge marks credentials earned this calendar year; it drops off
@@ -99,7 +101,8 @@
 				<h3 class="text-xl text-canvas">{freeIntro.title}</h3>
 				<p class="mt-2 text-sm text-sage-100">{freeIntro.text}</p>
 				<a
-					href="mailto:{site.email}?subject={encodeURIComponent(freeIntro.title)}"
+					href={buildBookingMailto(site.email, freeIntro.title)}
+					onclick={() => trackEvent('book-mail-click')}
 					class="mt-5 inline-flex items-center gap-2 rounded-full bg-canvas px-6 py-3 text-sm font-medium text-forest-900 transition-colors hover:bg-sage-50"
 				>
 					Book via mail
