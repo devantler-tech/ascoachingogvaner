@@ -4,7 +4,9 @@
 	import Services from '#lib/components/Services.svelte';
 	import ContactForm from '#lib/components/ContactForm.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import { trackEvent } from '#lib/analytics.js';
 	import { about, contact, freeIntro, pricingNote, site } from '#lib/content.js';
+	import { buildBookingMailto } from '#lib/mailto.js';
 	import { structuredDataScript } from '#lib/structured-data.js';
 
 	// "Ny" badge marks credentials earned this calendar year; it drops off
@@ -85,7 +87,7 @@
 	id="kontakt"
 	eyebrow="Kontakt & booking"
 	title={contact.lead}
-	intro="Book en tid direkte i kalenderen, eller skriv en besked her med dine spørgsmål, så vender jeg tilbage hurtigst muligt."
+	intro="Skriv en besked her eller send en mail for at booke en tid eller stille dine spørgsmål, så vender jeg tilbage hurtigst muligt."
 >
 	<div class="grid gap-12 lg:grid-cols-[1.3fr_1fr]">
 		<div class="rounded-3xl border border-sage-100 bg-surface p-7 shadow-soft sm:p-9">
@@ -99,13 +101,12 @@
 				<h3 class="text-xl text-canvas">{freeIntro.title}</h3>
 				<p class="mt-2 text-sm text-sage-100">{freeIntro.text}</p>
 				<a
-					href={site.bookingUrl}
-					target="_blank"
-					rel="noopener noreferrer"
+					href={buildBookingMailto(site.email, freeIntro.title)}
+					onclick={() => trackEvent('book-mail-click')}
 					class="mt-5 inline-flex items-center gap-2 rounded-full bg-canvas px-6 py-3 text-sm font-medium text-forest-900 transition-colors hover:bg-sage-50"
 				>
-					Book tid online
-					<Icon name="arrow" size={18} />
+					Book via mail
+					<Icon name="mail" size={18} />
 				</a>
 			</div>
 

@@ -1,88 +1,32 @@
-import { execFileSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
 
-import siteConfig from '../../src/lib/site-config.json';
-import { site } from '../../src/lib/content.js';
+import { bookingHref } from '../../src/lib/content.js';
 
-// Runs the real render script the Docker build runs, so the test pins the
-// actual tool rather than a re-implementation of it (issue #100).
-const renderScript = 'docker/render-nginx-conf.mjs';
+// The Docker image copies this file verbatim, so the test reads the exact
+// config nginx serves.
+const conf = readFileSync('docker/nginx.conf', 'utf8');
 
-let outDir: string | undefined;
-
-afterEach(() => {
-	if (outDir) {
-		rmSync(outDir, { recursive: true, force: true });
-		outDir = undefined;
-	}
-});
-
-function renderConf(): string {
-	outDir = mkdtempSync(join(tmpdir(), 'nginx-conf-'));
-
-	const outPath = join(outDir, 'default.conf');
-	execFileSync('node', [renderScript, outPath]);
-
-	return readFileSync(outPath, 'utf8');
-}
-
-describe('booking URL single source', () => {
-	it('renders the /book-tid redirect from site-config.json', () => {
-		const conf = renderConf();
-
-		expect(conf).toContain(`location = /book-tid { return 301 ${siteConfig.bookingUrl}; }`);
-		expect(conf).not.toContain('__BOOKING_URL__');
+describe('legacy redirects', () => {
+	it('sends the old booking page to the contact section the site links to', () => {
+		expect(conf).toContain(`location = /book-tid { return 301 /${bookingHref}; }`);
 	});
 
-	it('feeds the same URL to the site code', () => {
-		expect(site.bookingUrl).toBe(siteConfig.bookingUrl);
+	it('keeps the old multi-page routes pointing at their sections', () => {
+		expect(conf).toContain('location = /services { return 301 /#services; }');
+		expect(conf).toContain('location = /om-mig { return 301 /#om-mig; }');
+		expect(conf).toContain('location = /kontakt { return 301 /#kontakt; }');
 	});
 
-	it('keeps the template free of a hardcoded booking host', () => {
-		const template = readFileSync('docker/nginx.conf.template', 'utf8');
-		const bookingHost = new URL(siteConfig.bookingUrl).host;
-
-		expect(template).not.toContain(bookingHost);
-		expect(template).toContain('__BOOKING_URL__');
+	// Without this nginx builds an absolute Location from its own scheme and
+	// port (http://<host>:8080/...), which visitors behind the gateway cannot reach.
+	it('sends relative redirects so visitors keep the public https origin', () => {
+		expect(conf).toMatch(/^\s*absolute_redirect off;$/m);
 	});
 
-	// nginx reads # as a comment and $ as a variable inside `return 301 ...;`,
-	// so a vendor URL carrying either must abort the render instead of shipping
-	// a config that breaks or redirects wrong. The last cases pass the character
-	// class but do not parse as an https URL with a hostname — a config typo
-	// that must fail the build rather than ship an unusable Location target.
-	it.each([
-		'https://vendor.example/#/book',
-		'https://vendor.example/book$id',
-		'https://vendor.example/"book"',
-		'https://?book',
-		'https://%',
-		// new URL() silently normalizes missing-slash typos, but nginx would emit
-		// the raw string verbatim — the render must reject them, not rely on parsing.
-		'https:/vendor.example/book',
-		'https:vendor.example/book',
-	])(
-		'rejects a booking URL with nginx metacharacters: %s',
-		(badUrl) => {
-			// Bind the temp dir to a const so it stays narrowed to `string` inside
-			// the nested toThrow() callback (TS won't narrow the mutable `outDir`
-			// capture across a closure boundary); outDir still tracks it for cleanup.
-			const dir = mkdtempSync(join(tmpdir(), 'nginx-conf-'));
-			outDir = dir;
-			mkdirSync(join(dir, 'src/lib'), { recursive: true });
-			mkdirSync(join(dir, 'docker'), { recursive: true });
-			cpSync('docker/nginx.conf.template', join(dir, 'docker/nginx.conf.template'));
-			cpSync(renderScript, join(dir, renderScript));
-			writeFileSync(join(dir, 'src/lib/site-config.json'), JSON.stringify({ ...siteConfig, bookingUrl: badUrl }));
-
-			expect(() => execFileSync('node', [renderScript, join(dir, 'out/default.conf')], { cwd: dir })).toThrow(
-				/not a plain https URL/,
-			);
-		},
-	);
+	it('does not link to any external booking system', () => {
+		expect(conf).not.toMatch(/return 301 https?:/);
+	});
 });
 
 describe('page caching', () => {
@@ -90,21 +34,21 @@ describe('page caching', () => {
 	// before a deploy names hashed /_app/immutable assets the new image no longer
 	// contains. Declaring add_header in a location drops the server-level
 	// security headers, so the same block must include the snippet again.
-	function pageLocation(conf: string): string {
+	function pageLocation(): string {
 		const block = /location \/ \{([^}]*)\}/.exec(conf);
 		if (!block) throw new Error('the catch-all page location must exist');
 		return block[1];
 	}
 
 	it('revalidates pages instead of letting browsers reuse them heuristically', () => {
-		expect(pageLocation(renderConf())).toMatch(/add_header Cache-Control "no-cache";/);
+		expect(pageLocation()).toMatch(/add_header Cache-Control "no-cache";/);
 	});
 
 	it('keeps the security headers on pages', () => {
-		expect(pageLocation(renderConf())).toContain('include /etc/nginx/snippets/security-headers.conf;');
+		expect(pageLocation()).toContain('include /etc/nginx/snippets/security-headers.conf;');
 	});
 
 	it('still caches hashed build assets as immutable', () => {
-		expect(renderConf()).toMatch(/location \/_app\/immutable\/ \{[^}]*add_header Cache-Control "public, immutable";/);
+		expect(conf).toMatch(/location \/_app\/immutable\/ \{[^}]*add_header Cache-Control "public, immutable";/);
 	});
 });

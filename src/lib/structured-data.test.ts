@@ -45,7 +45,7 @@ describe('buildStructuredData', () => {
 		expect(business.telephone).toBe(site.phone);
 		expect(business.email).toBe(site.email);
 		expect(rec(business.identifier).value).toBe(site.cvr);
-		expect(business.sameAs).toContain(site.bookingUrl);
+		expect(business.sameAs).toBeUndefined();
 		expect(rec(business.address).addressLocality).toBe('Haderslev');
 		expect(rec(business.address).postalCode).toBe('6100');
 		expect(rec(business.address).addressCountry).toBe('DK');

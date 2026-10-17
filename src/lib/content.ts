@@ -2,12 +2,11 @@
 // it everywhere it is rendered. Prices and package details mirror the current
 // ascoachingogvaner.dk offering.
 
-import siteConfig from './site-config.json';
-
 const address = 'Fjordagervej 20U, 1. sal\n6100 Haderslev';
 
 // The site is fully static, so these public contact details are baked in at
-// build time (no runtime env). Bookings happen in an external booking system.
+// build time (no runtime env). Sessions are booked by email or through the
+// contact form, which opens the visitor's own mail app.
 export const site = {
 	name: 'AS - Coaching, vaner og ro',
 	tagline: 'Energi, nærvær og indre styrke',
@@ -24,12 +23,12 @@ export const site = {
 	url: 'https://ascoachingogvaner.dk/',
 	// Opens the visitor's default maps app (this Google Maps URL works on both
 	// desktop and mobile, and launches the app when one is installed).
-	mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.replace(/\n/g, ', '))}`,
-	// Defined once in site-config.json: the Docker build renders the nginx
-	// /book-tid redirect from the same file, so a booking-vendor change is a
-	// one-file edit (issue #100).
-	bookingUrl: siteConfig.bookingUrl
+	mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.replace(/\n/g, ', '))}`
 };
+
+// Every booking button leads to the contact section, where visitors book by
+// writing a message or sending an email.
+export const bookingHref = '#kontakt';
 
 // The coach behind the business. Her name appears in the "Om mig" prose, but is
 // also kept here as a structured field so the JSON-LD `Person` (and any future
@@ -45,14 +44,14 @@ export interface NavLink {
 	cta?: boolean;
 }
 
-// Single-page site: in-page anchors scroll to a section; "Book tid" is the one
-// external link, opening the booking system.
+// Single-page site: every link is an in-page anchor that scrolls to a section.
+// The "Book tid" button leads to the contact section, like "Kontakt".
 export const nav: NavLink[] = [
 	{ href: '#top', label: 'Forside' },
 	{ href: '#services', label: 'Services' },
 	{ href: '#om-mig', label: 'Om mig' },
 	{ href: '#kontakt', label: 'Kontakt' },
-	{ href: site.bookingUrl, label: 'Book tid', cta: true }
+	{ href: bookingHref, label: 'Book tid', cta: true }
 ];
 
 export interface FocusArea {
