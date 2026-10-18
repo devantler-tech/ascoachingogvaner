@@ -35,15 +35,16 @@ og package manageren til bevidste dependency-ændringer, ikke håndredigering af
 
 Ret eksempelvis en kort formulering i `src/lib/content.ts`, og behold sidens danske sprog
 og design. Opfind ikke priser, certificeringer, behandlingsløfter eller kunderesultater.
-Bookingadressen ejes af `src/lib/site-config.json`, som også styrer den genererede
-nginx-redirect. Komponenter og routes ejer layoutet; unit- og browsertests ligger under `tests/`.
+Bookingknapperne fører til kontaktafsnittet, hvor man booker via mail eller formularen.
+Komponenter og routes ejer layoutet; nginx-konfigurationen ligger i `docker/nginx.conf`;
+unit- og browsertests ligger under `tests/`.
 
 Følg [README'ens lokale preview](README.md#kør-siden-lokalt), besøg det berørte afsnit,
-og stop serveren med Ctrl+C. Kontakt åbner en mailapp, og booking peger ud af sitet;
-send ikke en rigtig mail eller booking som dokumentationstest. Brug kun opdigtede
+og stop serveren med Ctrl+C. Kontakt og booking åbner en mailapp;
+send ikke en rigtig mail som dokumentationstest. Brug kun opdigtede
 oplysninger, hvis en test kræver input, og lad eksterne links være uaktiverede.
 
-Redigér ikke `build/`, `.svelte-kit/` eller genereret nginx-output. Bevar Safari 13.1-
+Redigér ikke `build/` eller `.svelte-kit/`. Bevar Safari 13.1-
 kravene til både CSS og JavaScript samt accessibility-tests; slet eller svæk ikke et check
 for at få en ændring igennem.
 
@@ -102,7 +103,7 @@ git diff --check
 Alle kommandoer skal afslutte med status 0. Retired-link-fixturen kontrollerer lokal wiring;
 CI kører også den udgivne validator mod ren dokumentation, et ugyldigt link og manglende
 konfiguration. CI bygger desuden den rigtige Docker-container og kontrollerer både en
-tilgængelig forside og booking-redirect. Docker kræves ikke for den første tekstændring;
+tilgængelig forside og redirecten fra den gamle bookingside til kontaktafsnittet. Docker kræves ikke for den første tekstændring;
 lokale fixtures er ikke bevis for den container eller en live deployment.
 
 Notér manglende værktøjer eller utilgængelige checks ærligt. Brug ikke udgivelsesadgang

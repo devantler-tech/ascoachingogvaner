@@ -7,8 +7,10 @@
 	let activeId = $state('top');
 
 	// Scroll-spy: highlight the nav link for whichever section is currently in view.
+	// The call-to-action button is never highlighted, so it is left out here.
 	onMount(() => {
 		const sections = nav
+			.filter((link) => !link.cta)
 			.map((link) => document.getElementById(link.href.replace(/^#/, '')))
 			.filter((el): el is HTMLElement => el !== null);
 		if (sections.length === 0) return;
@@ -34,7 +36,6 @@
 	});
 
 	const isActive = (href: string): boolean => href === `#${activeId}`;
-	const isExternal = (href: string): boolean => /^https?:\/\//.test(href);
 </script>
 
 <header class="sticky top-0 z-40 border-b border-sage-100 bg-canvas/85 backdrop-blur">
@@ -45,13 +46,11 @@
 		</a>
 
 		<ul class="hidden items-center gap-1 md:flex">
-			{#each nav as link (link.href)}
+			{#each nav as link (link.label)}
 				<li>
 					{#if link.cta}
 						<a
 							href={link.href}
-							target={isExternal(link.href) ? '_blank' : undefined}
-							rel={isExternal(link.href) ? 'noopener noreferrer' : undefined}
 							class="ml-2 inline-flex items-center gap-2 rounded-full bg-forest-700 px-5 py-2 text-sm font-medium text-canvas transition-colors hover:bg-forest-900"
 						>
 							{link.label}
@@ -87,12 +86,10 @@
 	{#if open}
 		<div class="border-t border-sage-100 bg-canvas md:hidden">
 			<ul class="mx-auto flex max-w-6xl flex-col gap-1 px-5 py-3">
-				{#each nav as link (link.href)}
+				{#each nav as link (link.label)}
 					<li>
 						<a
 							href={link.href}
-							target={isExternal(link.href) ? '_blank' : undefined}
-							rel={isExternal(link.href) ? 'noopener noreferrer' : undefined}
 							onclick={() => (open = false)}
 							class="block rounded-lg px-4 py-3 text-base font-medium {link.cta
 								? 'bg-forest-700 text-center text-canvas'

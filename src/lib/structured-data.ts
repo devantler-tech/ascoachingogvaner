@@ -86,7 +86,6 @@ export function buildStructuredData(): Record<string, unknown> {
 		],
 		// Danish company registration number (CVR).
 		identifier: { '@type': 'PropertyValue', propertyID: 'CVR', value: site.cvr },
-		sameAs: [site.bookingUrl],
 		employee: { '@id': personId },
 		...(priceRange ? { priceRange } : {}),
 		hasOfferCatalog: {

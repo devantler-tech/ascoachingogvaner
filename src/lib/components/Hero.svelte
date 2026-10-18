@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { trackEvent } from '#lib/analytics.js';
-	import { site } from '#lib/content.js';
+	import { bookingHref, site } from '#lib/content.js';
 	import Icon from './Icon.svelte';
 </script>
 
@@ -26,10 +25,7 @@
 			</p>
 			<div class="mt-8 flex flex-wrap gap-3">
 				<a
-					href={site.bookingUrl}
-					target="_blank"
-					rel="noopener noreferrer"
-					onclick={() => trackEvent('book-intro-click')}
+					href={bookingHref}
 					class="inline-flex items-center gap-2 rounded-full bg-forest-700 px-7 py-3.5 font-medium text-canvas transition-colors hover:bg-forest-900"
 				>
 					Book en gratis startsamtale

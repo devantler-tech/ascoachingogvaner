@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildContactMailto } from '../../src/lib/mailto.js';
+import { buildBookingMailto, buildContactMailto } from '../../src/lib/mailto.js';
 
 describe('buildContactMailto', () => {
 	const input = {
@@ -33,5 +33,19 @@ describe('buildContactMailto', () => {
 		expect(url).not.toContain('+');
 		expect(url).toContain('%20');
 		expect(url).toContain('%0A');
+	});
+});
+
+describe('buildBookingMailto', () => {
+	it('targets the given recipient with the encoded subject and no body', () => {
+		expect(buildBookingMailto('kontakt@example.dk', 'Gratis startsamtale')).toBe(
+			'mailto:kontakt@example.dk?subject=Gratis%20startsamtale'
+		);
+	});
+
+	it('encodes characters that would otherwise end the subject early', () => {
+		const params = new URL(buildBookingMailto('x@y.dk', 'Tid & sted? 100%')).searchParams;
+		expect([...params.keys()]).toEqual(['subject']);
+		expect(params.get('subject')).toBe('Tid & sted? 100%');
 	});
 });
