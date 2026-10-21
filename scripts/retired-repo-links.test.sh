@@ -64,6 +64,19 @@ guard() {
         .uses == ($action.runs.steps[] | select(.id == "links") | .uses) and
         .with == {enabled:"true","config-file":".github/missing-retired-repo-links.json"})] | length) != 1
     then error("missing configuration must use the clean consumer root")
+    elif ([$action.runs.steps[] | select(.name == "Require both negative controls to fail without success output") |
+      select(.if == "always()" and (.["continue-on-error"] // false) == false and .env == {
+        LINK_OUTCOME:"${{ steps.negative.outcome }}",
+        LINK_VALIDATED:"${{ steps.negative.outputs.validated }}",
+        CONFIG_OUTCOME:"${{ steps.missing-config.outcome }}",
+        CONFIG_VALIDATED:"${{ steps.missing-config.outputs.validated }}"
+      })] | length) != 1
+    then error("negative rejection proof must bind its own results and always run")
+    elif ([$action.runs.steps[] | select(.id == "negative") |
+      select(.if == null and .["continue-on-error"] == true and
+        .uses == ($action.runs.steps[] | select(.id == "links") | .uses) and
+        .with == {enabled:"true","working-directory":"${{ steps.fixture.outputs.directory }}"})] | length) != 1
+    then error("retired-link control must use its fixture and continue after failure")
     elif (["always()", "${{ always() }}"] | index($ci.jobs["ci-required-checks"].if)) == null or
       ($ci.jobs["ci-required-checks"].needs | index("validate-retired-links")) == null or
       ($ci.jobs["ci-required-checks"].steps | any(.with["job-results"] // "" |
@@ -102,6 +115,21 @@ disabled caller	.action.runs.steps |= map(if .id == "links" then .with.enabled="
 action bypass	.action.runs.steps |= map(if .id == "links" then del(.uses) | .run="echo PASS" | .shell="bash" else . end)	explicitly enabled
 lost success proof	.action.runs.steps |= map(select(.name != "Require a complete scan"))	complete validation
 dirty missing-config control	.action.runs.steps |= map(if .id == "missing-config" then .with["working-directory"]="${{ steps.fixture.outputs.directory }}" else . end)	clean consumer root
+missing rejection condition	.action.runs.steps |= map(if .name == "Require both negative controls to fail without success output" then del(.if) else . end)	negative rejection proof
+skipped rejection proof	.action.runs.steps |= map(if .name == "Require both negative controls to fail without success output" then .if="false" else . end)	negative rejection proof
+ignored rejection failure	.action.runs.steps |= map(if .name == "Require both negative controls to fail without success output" then .["continue-on-error"]=true else . end)	negative rejection proof
+missing link outcome	.action.runs.steps |= map(if .name == "Require both negative controls to fail without success output" then del(.env.LINK_OUTCOME) else . end)	negative rejection proof
+misbound link outcome	.action.runs.steps |= map(if .name == "Require both negative controls to fail without success output" then .env.LINK_OUTCOME="${{ steps.links.outcome }}" else . end)	negative rejection proof
+missing link validation	.action.runs.steps |= map(if .name == "Require both negative controls to fail without success output" then del(.env.LINK_VALIDATED) else . end)	negative rejection proof
+misbound link validation	.action.runs.steps |= map(if .name == "Require both negative controls to fail without success output" then .env.LINK_VALIDATED="${{ steps.links.outputs.validated }}" else . end)	negative rejection proof
+missing config outcome	.action.runs.steps |= map(if .name == "Require both negative controls to fail without success output" then del(.env.CONFIG_OUTCOME) else . end)	negative rejection proof
+misbound config outcome	.action.runs.steps |= map(if .name == "Require both negative controls to fail without success output" then .env.CONFIG_OUTCOME="${{ steps.negative.outcome }}" else . end)	negative rejection proof
+missing config validation	.action.runs.steps |= map(if .name == "Require both negative controls to fail without success output" then del(.env.CONFIG_VALIDATED) else . end)	negative rejection proof
+misbound config validation	.action.runs.steps |= map(if .name == "Require both negative controls to fail without success output" then .env.CONFIG_VALIDATED="${{ steps.negative.outputs.validated }}" else . end)	negative rejection proof
+missing retired-link fixture	.action.runs.steps |= map(if .id == "negative" then del(.with["working-directory"]) else . end)	retired-link control
+misbound retired-link fixture	.action.runs.steps |= map(if .id == "negative" then .with["working-directory"]="." else . end)	retired-link control
+missing retired-link continuation	.action.runs.steps |= map(if .id == "negative" then del(.["continue-on-error"]) else . end)	retired-link control
+disabled retired-link continuation	.action.runs.steps |= map(if .id == "negative" then .["continue-on-error"]=false else . end)	retired-link control
 skipped aggregate	.ci.jobs["ci-required-checks"].if="false"	gate required CI
 lost aggregate condition	del(.ci.jobs["ci-required-checks"].if)	gate required CI
 lost aggregation	.ci.jobs["ci-required-checks"].needs |= map(select(. != "validate-retired-links"))	gate required CI
