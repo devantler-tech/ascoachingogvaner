@@ -11,13 +11,18 @@ if [[ -f "$root/.github/workflows/retired-links.yaml" ]]; then
 else
   printf 'null\n' >"$work/workflow.json"
 fi
+if [[ -f "$root/.github/actions/documentation-links/action.yaml" ]]; then
+  yq -o=json '.' "$root/.github/actions/documentation-links/action.yaml" >"$work/action.json"
+else
+  printf 'null\n' >"$work/action.json"
+fi
 if [[ -f "$root/.github/retired-repo-links.json" ]]; then
   cp "$root/.github/retired-repo-links.json" "$work/config.json"
 else
   printf 'null\n' >"$work/config.json"
 fi
-jq -n --slurpfile ci "$work/ci.json" --slurpfile config "$work/config.json" --slurpfile workflow "$work/workflow.json" \
-  '{ci:$ci[0],config:$config[0],workflow:$workflow[0]}' >"$work/bundle.json"
+jq -n --slurpfile ci "$work/ci.json" --slurpfile config "$work/config.json" --slurpfile workflow "$work/workflow.json" --slurpfile action "$work/action.json" \
+  '{ci:$ci[0],config:$config[0],workflow:$workflow[0],action:$action[0]}' >"$work/bundle.json"
 
 # Validate a JSON bundle containing the consumer scope and CI workflow definitions.
 # Require a bounded read-only scan, an independent missing-config control, and an always-running aggregate.
@@ -25,29 +30,38 @@ jq -n --slurpfile ci "$work/ci.json" --slurpfile config "$work/config.json" --sl
 guard() {
   jq -e '
     def runnable: .if == null and (.["continue-on-error"] // false) == false;
-    .ci as $ci | .workflow as $workflow | $workflow.jobs["validate-retired-links"] as $job |
+    def local_caller:
+      runnable and .needs == null and .["runs-on"] == "ubuntu-latest" and
+      .["timeout-minutes"] == 10 and .permissions == {contents:"read"} and
+      (.steps | length) == 3 and
+      (.steps[0] | runnable and (.uses | test("^step-security/harden-runner@[0-9a-f]{40}$"))) and
+      (.steps[1] | runnable and (.uses | test("^actions/checkout@[0-9a-f]{40}$")) and .with["persist-credentials"] == false) and
+      .steps[2] == {name:"Check documentation and failure controls",uses:"./.github/actions/documentation-links"};
+    .ci as $ci | .workflow as $workflow | .action as $action | $workflow.jobs["validate-retired-links"] as $job |
     if .config != {version:1,repositories:["devantler-tech/reusable-workflows"],paths:["README.md","AGENTS.md"],exceptions:[]}
     then error("consumer scope must be explicit and bounded")
-    elif $ci.jobs["validate-retired-links"] != {uses:"./.github/workflows/retired-links.yaml",permissions:{contents:"read"}}
+    elif ($ci.jobs["validate-retired-links"] | local_caller | not)
     then error("required caller must bind the local guard without bypasses")
-    elif $workflow.on.push.branches != ["main"] or ($workflow.on | has("workflow_call")) != true
+    elif $workflow.on.push.branches != ["main"] or ($workflow.on | has("workflow_call")) or
+      ($action.runs.using != "composite")
     then error("same guard must execute after merge and from required CI")
     elif $ci.permissions != {contents:"read"} or $workflow.permissions != {contents:"read"} or
       $job == null or $job.permissions != {contents:"read"} or
-      ($job | runnable | not) or $job.needs != null or
-      ($job | tostring | test("secrets|github[.]token|create-github-app-token";"i"))
+      ($job | local_caller | not) or
+      ($action.runs.steps | tostring | test("secrets|github[.]token|create-github-app-token";"i")) or
+      any($action.runs.steps[]; has("run") and .shell != "bash")
     then error("consumer scan must execute without write credentials")
-    elif ([$job.steps[] | select(.id == "links") |
+    elif ([$action.runs.steps[] | select(.id == "links") |
       select(runnable and .with.enabled == "true" and
         ((.uses // "") | test("^devantler-tech/[.]github/actions/validate-retired-repo-links@[0-9a-f]{40}$")))] | length) != 1
     then error("released consumer action must execute explicitly enabled")
-    elif ([$job.steps[] | select(.name == "Require a complete scan") |
+    elif ([$action.runs.steps[] | select(.name == "Require a complete scan") |
       select(runnable and .env.VALIDATED == "${{ steps.links.outputs.validated }}" and
         .run == "test \"$VALIDATED\" = true")] | length) != 1
     then error("consumer scan must prove complete validation")
-    elif ([$job.steps[] | select(.id == "missing-config") |
+    elif ([$action.runs.steps[] | select(.id == "missing-config") |
       select(.if == null and .["continue-on-error"] == true and
-        .uses == ($job.steps[] | select(.id == "links") | .uses) and
+        .uses == ($action.runs.steps[] | select(.id == "links") | .uses) and
         .with == {enabled:"true","config-file":".github/missing-retired-repo-links.json"})] | length) != 1
     then error("missing configuration must use the clean consumer root")
     elif (["always()", "${{ always() }}"] | index($ci.jobs["ci-required-checks"].if)) == null or
@@ -66,7 +80,11 @@ while IFS=$'\t' read -r label mutation diagnostic; do
     echo "FAIL: $label was accepted" >&2
     exit 1
   fi
-  grep -qF "$diagnostic" "$work/result"
+  if ! grep -qF "$diagnostic" "$work/result"; then
+    cat "$work/result" >&2
+    echo "FAIL: $label did not report $diagnostic" >&2
+    exit 1
+  fi
   count=$((count + 1))
 done <<'CASES'
 missing config	.config=null	explicit and bounded
@@ -74,18 +92,43 @@ broadened scope	.config.paths += ["."]	explicit and bounded
 historical bypass	.config.exceptions=[{}]	explicit and bounded
 skipped caller	.ci.jobs["validate-retired-links"].if="false"	bind the local guard
 lost main observation	del(.workflow.on.push)	execute after merge
+single-consumer export	.workflow.on.workflow_call=null	execute after merge
+lost local action	.action=null	execute after merge
+unbound main action	.workflow.jobs["validate-retired-links"].steps[2].uses="./other"	execute without write
+persisted PR credential	.ci.jobs["validate-retired-links"].steps[1].with["persist-credentials"]=true	bind the local guard
 skipped job	.workflow.jobs["validate-retired-links"].if="false"	execute without write
 write access	.workflow.jobs["validate-retired-links"].permissions.contents="write"	execute without write
-disabled caller	.workflow.jobs["validate-retired-links"].steps |= map(if .id == "links" then .with.enabled="false" else . end)	explicitly enabled
-action bypass	.workflow.jobs["validate-retired-links"].steps |= map(if .id == "links" then del(.uses) | .run="echo PASS" else . end)	explicitly enabled
-lost success proof	.workflow.jobs["validate-retired-links"].steps |= map(select(.name != "Require a complete scan"))	complete validation
-dirty missing-config control	.workflow.jobs["validate-retired-links"].steps |= map(if .id == "missing-config" then .with["working-directory"]="${{ steps.fixture.outputs.directory }}" else . end)	clean consumer root
+disabled caller	.action.runs.steps |= map(if .id == "links" then .with.enabled="false" else . end)	explicitly enabled
+action bypass	.action.runs.steps |= map(if .id == "links" then del(.uses) | .run="echo PASS" | .shell="bash" else . end)	explicitly enabled
+lost success proof	.action.runs.steps |= map(select(.name != "Require a complete scan"))	complete validation
+dirty missing-config control	.action.runs.steps |= map(if .id == "missing-config" then .with["working-directory"]="${{ steps.fixture.outputs.directory }}" else . end)	clean consumer root
 skipped aggregate	.ci.jobs["ci-required-checks"].if="false"	gate required CI
 lost aggregate condition	del(.ci.jobs["ci-required-checks"].if)	gate required CI
 lost aggregation	.ci.jobs["ci-required-checks"].needs |= map(select(. != "validate-retired-links"))	gate required CI
 lost result	.ci.jobs["ci-required-checks"].steps |= map(if .with["job-results"] then .with["job-results"] |= gsub("needs.validate-retired-links.result";"needs.other.result") else . end)	gate required CI
 CASES
 echo "PASS: consumer wiring rejects $count independent regressions"
+
+# Moving the steps must not turn their rejection proof into a green no-op.
+jq -er '.action.runs.steps[] | select(.name == "Require both negative controls to fail without success output") | .run' \
+  "$work/bundle.json" >"$work/rejection-proof.sh"
+count=0
+for link in failure success skipped cancelled; do
+  for config in failure success skipped cancelled; do
+    for link_validated in '' true; do
+      for config_validated in '' true; do
+        expected=1
+        [[ "$link:$config:$link_validated:$config_validated" != failure:failure:: ]] || expected=0
+        actual=0
+        LINK_OUTCOME="$link" CONFIG_OUTCOME="$config" LINK_VALIDATED="$link_validated" CONFIG_VALIDATED="$config_validated" \
+          bash -euo pipefail "$work/rejection-proof.sh" >"$work/result" 2>&1 || actual=$?
+        [[ "$actual" == "$expected" ]] || { echo 'FAIL: negative control proof accepted incomplete rejection' >&2; exit 1; }
+        count=$((count + 1))
+      done
+    done
+  done
+done
+echo "PASS: actual negative-control reducer rejects $((count - 1)) incomplete outcomes"
 
 [[ $# == 0 ]] && exit 0
 [[ $# == 1 && -x "$1" ]] || { echo 'Expected one executable released validator' >&2; exit 1; }
