@@ -44,7 +44,7 @@ npm run build         # Static prerender build (adapter-static -> build/)
 
 No database, secrets or environment variables are required: the site is fully static. Copy and public contact details live in `src/lib/content.ts`. Never commit `.env` files.
 
-The required documentation guard scans only README.md and AGENTS.md, with its scope declared in .github/retired-repo-links.json. Run `bash scripts/retired-repo-links.test.sh` locally to verify the scope and required CI registration. The native job uses the shipped validator and checks a clean scan, a seeded retired link, and missing configuration; it also runs on main after merge.
+The required documentation guard scans only README.md and AGENTS.md, with its scope declared in .github/retired-repo-links.json. Run `bash scripts/retired-repo-links.test.sh` locally to verify the scope and required CI registration. PR CI and the main-only documentation workflow each call the local `.github/actions/documentation-links` action; there is no reusable-workflow export. Both entrypoints retain the read-only shipped validator, clean scan, seeded retired link and missing-configuration controls.
 
 ## Maintenance (autonomous Agentic Engineer)
 

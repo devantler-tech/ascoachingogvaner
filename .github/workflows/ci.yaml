@@ -8,9 +8,23 @@ permissions:
 
 jobs:
   validate-retired-links:
-    uses: ./.github/workflows/retired-links.yaml
+    name: Validate retired repository links
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check documentation and failure controls
+        # actionlint 1.7.12 cannot parse $/ yet; keep the explicit read-only checkout.
+        uses: ./.github/actions/documentation-links # zizmor: ignore[self-repository]
 
   lint:
     name: Lint
