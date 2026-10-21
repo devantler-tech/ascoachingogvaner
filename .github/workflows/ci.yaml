@@ -143,8 +143,8 @@ jobs:
           fi
 
   # The portable pin contract ships from platform-tenant-template and is deliberately NOT
-  # tenant-ignored, so it lands here on every sync — but nothing here ran it, so the SHA pins on the
-  # three devantler-tech/actions callers (cd, release, template-sync) were unchecked in this tenant.
+  # tenant-ignored, so it lands here on every sync. It validates immutable maintained
+  # callers, keeping release and template-sync aligned and the publisher independently approved.
   # A caller reverting to a movable tag is the ordinary outcome of a hand edit or a bad merge, and it
   # is exactly what this guard refuses. The template's own scaffold contract already specifies this
   # wiring by name — a `workflow-caller-pins` job running the script, and required checks depending
@@ -230,7 +230,7 @@ jobs:
     if: ${{ always() }}
     steps:
       - name: 📊 Require all CI checks to pass
-        uses: devantler-tech/actions/aggregate-job-checks@ea4df9004d4ab43b6c9af5b0c5f55712f7211328 # v13.10.12
+        uses: devantler-tech/.github/actions/aggregate-job-checks@0c7b6c3509b73adbc7537e030935bb01987e625b # v7.23.0
         with:
           job-results: >-
             ${{ needs.lint.result }}
