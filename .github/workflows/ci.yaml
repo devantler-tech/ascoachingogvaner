@@ -67,6 +67,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: Test cold startup in a nested worktree
+        run: bash scripts/nested-worktree.test.sh
 
   e2e:
     name: E2E Tests
