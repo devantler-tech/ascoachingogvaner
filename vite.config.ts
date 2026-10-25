@@ -3,6 +3,7 @@ import { enhancedImages } from '@sveltejs/enhanced-img';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 import { flattenCascadeLayersPlugin } from './vite-plugins/flatten-cascade-layers';
 
@@ -11,6 +12,24 @@ export default defineConfig({
 	// flattenCascadeLayersPlugin() is enforce:'post', so its position in this
 	// list is immaterial — it always runs after Tailwind emits the stylesheet.
 	plugins: [
+		{
+			name: 'test-checkout-tsconfig',
+			configEnvironment: {
+				order: 'post',
+				handler(_name, _options, { mode }) {
+					if (mode !== 'test') return;
+					// Test runners can add environments after the root config hook.
+					// Bind each optimizer to this checkout, including cold startup.
+					return {
+						optimizeDeps: {
+							rolldownOptions: {
+								tsconfig: fileURLToPath(new URL('./tsconfig.json', import.meta.url))
+							}
+						}
+					};
+				}
+			}
+		},
 		enhancedImages(),
 		tailwindcss(),
 		// SvelteKit's configuration lives here since SvelteKit 3 (it no longer
