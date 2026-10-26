@@ -6,8 +6,8 @@ repo_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 route="${repo_root}/deploy/httproute.yaml"
 enabled=$(yq -r '.metadata.annotations."gethomepage.dev/enabled"' "${route}")
 group=$(yq -r '.metadata.annotations."gethomepage.dev/group"' "${route}")
-if [ "${enabled}" != true ] || [ "${group}" != Clients ]; then
-  printf '%s\n' "Homepage discovery must be enabled in the Clients group" >&2
+if [ "${enabled}" != true ] || [ "${group}" != "Business & Clients" ]; then
+  printf '%s\n' "Homepage discovery must be enabled in the Business & Clients group" >&2
   exit 1
 fi
-printf '%s\n' 'Homepage discovery remains enabled in Clients.'
+printf '%s\n' 'Homepage discovery remains enabled in Business & Clients.'
