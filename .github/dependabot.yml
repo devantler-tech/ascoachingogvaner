@@ -71,9 +71,17 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
-    # The caller-pin contract keeps maintained release and template-sync on one
-    # commit; the publisher additionally needs its independent Platform approval.
-    # Grouping avoids divergent release/sync bumps without waiving that approval.
+    # The application publisher stays on the exact revision Platform has reviewed and approved for
+    # tenants, which the `📌 Refuse an unapproved publish-app pin` CI check enforces. Every
+    # devantler-tech/.github release moves the publisher's tag together with the other callers, so
+    # while Dependabot proposed it, every group pull request needed a hand-made commit putting the
+    # publisher back (#358). Move this pin by hand, in its own change, once Platform approves a
+    # newer revision. Ignoring it also silences security updates for the publisher, which is
+    # intended: only Platform's approval may move it.
+    ignore:
+      - dependency-name: "devantler-tech/.github/.github/workflows/publish-app.yaml"
+    # The caller-pin contract keeps the maintained release and template-sync callers on one
+    # commit. Grouping keeps them from diverging.
     groups:
       devantler-tech-actions:
         patterns:
