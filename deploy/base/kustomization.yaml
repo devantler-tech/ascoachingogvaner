@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# The static site that production (../prod) and dev (../dev) both run. Put a
+# manifest here only when both environments run it unchanged.
+resources:
+  - deployment.yaml
+  - service.yaml
+  # Tenant-owned CiliumNetworkPolicy allow-list (layered on the platform's
+  # default-deny floor): the site's Gateway ingress + DNS egress.
+  - networkpolicy.yaml

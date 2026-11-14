@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Dev: the shared site (../base), changed only by the settings below. The
+# platform reconciles it at `path: ./dev` into its own namespace and owns its
+# ingress behind sign-on, so dev carries none of production's identity: no
+# route, domain, certificate, DNS (external-dns), disruption budget or
+# simply.com credentials. Change base objects with patches here; never copy a
+# manifest.
+#
+# Analytics: the Umami tag is baked into the image at build time
+# (src/app.html), so it cannot be switched from here. Its `data-domains`
+# attribute limits tracking to ascoachingogvaner.dk, so dev's hostname sends
+# no page views to the production website.
+#
+# The base hard-codes the production namespace on some objects; pin dev's own
+# (the platform's Flux targetNamespace sets the same) so dev never renders
+# into production's namespace.
+namespace: ascoachingogvaner-dev
+resources:
+  - ../base
+# One replica; production runs two.
+replicas:
+  - name: ascoachingogvaner
+    count: 1
+patches:
+  # The base policy's only egress rule names the kube-system namespace for DNS.
+  # A new tenant policy may name no namespace (the platform's
+  # restrict-tenant-network-policies), and the platform generates allow-dns in
+  # every tenant namespace, so dev keeps only the Gateway ingress.
+  - target:
+      kind: CiliumNetworkPolicy
+      name: app
+    patch: |-
+      - op: remove
+        path: /spec/egress
