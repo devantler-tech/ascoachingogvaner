@@ -13,5 +13,7 @@ COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY --from=build /app/build /usr/share/nginx/html
 EXPOSE 8080
+# 127.0.0.1, not localhost: inside the image localhost resolves to ::1 first, and nginx listens
+# on IPv4 only, so a localhost check is refused.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -q -t 1 --spider http://localhost:8080/ || exit 1
+  CMD ["sh", "-c", "wget -q -t 1 --spider http://127.0.0.1:8080/ || exit 1"]

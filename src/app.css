@@ -11,7 +11,7 @@
 @theme {
 	/* Calm, professional wellness palette */
 	--color-canvas: #f7f5f0;
-	--color-surface: #ffffff;
+	--color-surface: #fff;
 	--color-sage-50: #eef2ee;
 	--color-sage-100: #d9e2d8;
 	--color-sage-300: #a7bca3;
@@ -23,10 +23,12 @@
 	--color-ink: #2b332c;
 	--color-muted: #5e6b60;
 
-	--font-serif: 'Lora Variable', Georgia, serif;
+	/* Fonts */
+	--font-serif: 'Lora Variable', georgia, serif;
 	--font-sans: 'Inter Variable', system-ui, sans-serif;
 
-	--shadow-soft: 0 10px 40px -12px rgba(36, 53, 40, 0.18);
+	/* Shadows */
+	--shadow-soft: 0 10px 40px -12px rgb(36 53 40 / 18%);
 }
 
 @media (prefers-reduced-motion: no-preference) {
