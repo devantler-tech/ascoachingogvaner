@@ -12,6 +12,9 @@ FROM nginxinc/nginx-unprivileged:1-alpine@sha256:b5047b9b76845eac124358373c68523
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY --from=build /app/build /usr/share/nginx/html
+# nginx-unprivileged already runs as its nginx user (UID 101); naming it makes the non-root user
+# explicit for scanners. deploy/ runs the pod as UID 1000 either way.
+USER 101
 EXPOSE 8080
 # 127.0.0.1, not localhost: inside the image localhost resolves to ::1 first, and nginx listens
 # on IPv4 only, so a localhost check is refused.
