@@ -1,6 +1,6 @@
 # Both base images are pinned by digest as well as tag, so every build of a commit uses the same
 # images and Dependabot proposes each rebuilt image as a reviewed update that cuts a release (#317).
-FROM node:26-alpine@sha256:6f08a523443ddedf52941874c203475b0ad503e859ad70cb26ab8be9a517dbd5 AS build
+FROM node:26-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS build
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
