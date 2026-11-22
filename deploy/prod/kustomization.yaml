@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Production: the shared site (../base) plus everything that carries the
+# production identity — the public routes and domain, its certificate and DNS,
+# the disruption budget, and the simply.com credentials. The platform
+# reconciles this through ../kustomization.yaml.
+resources:
+  - ../base
+  - external-dns-deployment.yaml
+  - external-dns-serviceaccount.yaml
+  - httproute.yaml
+  - httproute-www.yaml
+  - pod-disruption-budget.yaml
+  # The external-dns pods' egress to the kube-apiserver + simply.com API,
+  # layered on the platform's default-deny floor.
+  - external-dns-networkpolicy.yaml
+  # Namespaced SecretStore backing the simply.com credentials below.
+  - secretstore.yaml
+  - simply-credentials-seed.yaml
+  - simply-credentials-externalsecret.yaml
+  # Tenant-owned TLS for ascoachingogvaner.dk: namespaced ACME Issuer (simply.com
+  # DNS01) + Certificate + a ReferenceGrant so the shared platform Gateway can
+  # terminate TLS with the resulting Secret cross-namespace.
+  - issuer.yaml
+  - certificate.yaml
+  - referencegrant.yaml
