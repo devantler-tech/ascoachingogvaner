@@ -93,10 +93,8 @@ Kør også de lokale wiring-fixtures:
 
 ```sh
 bash scripts/retired-repo-links.test.sh
-sh scripts/workflow-caller-pin-contract.test.sh
 sh scripts/homepage-group.test.sh
 sh scripts/npm-toolchain.test.sh
-sh scripts/publish-pin-approved.test.sh
 git diff --check
 ```
 
