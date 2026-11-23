@@ -50,3 +50,6 @@ scripts/pod-security-admission.test.sh
 scripts/tenant-ci-contract.test.sh
 scripts/tenant-rbac-contract.test.sh
 scripts/tenant-rbac.test.sh
+
+# --- Merged from the template by template sync. A "!<entry>" line keeps one entry out. ---
+scripts/validate-workflow-queues.test.sh
