@@ -71,21 +71,16 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
-    # The caller-pin contract keeps the maintained release and template-sync callers on one
-    # commit. Grouping keeps them from diverging. The publish-app action moves with them: releases
-    # are signed by this repository's own cd.yaml on its tag, whatever action revision runs
-    # (devantler-tech/monorepo ADR 0017), so a new revision needs no Platform approval.
+    # The devantler-tech callers (release, template-sync and the publish-app action) move together
+    # in one PR instead of one PR each. Releases are signed by this repository's own cd.yaml on
+    # its tag, whatever action revision runs (devantler-tech/monorepo ADR 0017), so a new revision
+    # needs no Platform approval.
     groups:
       devantler-tech-actions:
         patterns:
           - "devantler-tech/*"
       # A group applies to EITHER version updates or security updates, never both, and the key
-      # above defaults to `version-updates`, so this second group is what covers advisories at
-      # all. It is best-effort, NOT a guarantee: a security group combines only the dependencies
-      # that actually HAVE an advisory, so if one caller is affected and the others are not,
-      # Dependabot still opens a partial bump that fails the shared-commit assertion. Recovering
-      # from that is manual — open a separate PR aligning the release/sync pair at one reviewed SHA,
-      # superseding the partial one.
+      # above defaults to `version-updates`, so this second group is what groups advisories.
       devantler-tech-actions-security:
         applies-to: security-updates
         patterns:
