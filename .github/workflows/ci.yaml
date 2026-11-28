@@ -240,7 +240,7 @@ jobs:
     if: ${{ always() }}
     steps:
       - name: 📊 Require all CI checks to pass
-        uses: devantler-tech/.github/actions/aggregate-job-checks@cd371c6003deca3a3b417b783da73e05b4bf690f # v22.0.0
+        uses: devantler-tech/.github/actions/aggregate-job-checks@d45338f0ba120e87bdb05c1f70691afe2ec9d2ca # v22.7.5
         with:
           check-workflow-startup: "true"
           job-results: >-

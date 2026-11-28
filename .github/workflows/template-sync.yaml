@@ -27,7 +27,7 @@ jobs:
       contents: write
       pull-requests: write
       id-token: write
-    uses: devantler-tech/.github/.github/workflows/template-sync.yaml@cd371c6003deca3a3b417b783da73e05b4bf690f # v22.0.0
+    uses: devantler-tech/.github/.github/workflows/template-sync.yaml@d45338f0ba120e87bdb05c1f70691afe2ec9d2ca # v22.7.5
     with:
       source-repo-path: devantler-tech/application-template
       use-app-token: true
